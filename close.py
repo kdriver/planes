@@ -70,6 +70,11 @@ def read_planes() :
 			except:
 				id = id + " nohex "
 
+			try:
+				id = id + " " + str(plane["track"])
+			except:
+				id = id + " notrack "
+
 			miles = Haversine([lon,lat],me).nm
 			if miles < 20: 
 				print(id,miles)
@@ -80,8 +85,8 @@ def read_planes() :
 #    myfile.write("%d,%f,%d,%d\n" % (t,x,d,len(planes)))
 
 
-while true:
+while 1:
 	read_planes()
-	sleep(180)
+	time.sleep(30)
 	print("--------")
 
