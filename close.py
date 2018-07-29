@@ -31,45 +31,57 @@ class Haversine:
         self.km=self.meters/1000.0              # output distance in kilometers
         self.miles=self.meters*0.000621371      # output distance in miles
         self.feet=self.miles*5280               # output distance in feet
+        self.nm=self.miles/1.15               # output distance in feet
 
 me=[-1.95917,50.83583]
 
-with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
-     data = json.load(f)
+def read_planes() :
+	with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
+	     data = json.load(f)
 
 
-planes = data["aircraft"]
+	planes = data["aircraft"]
 
-t = time.time()
-x = t/86400  + 25569
-d = int(t) % 86400
+	t = time.time()
+	x = t/86400  + 25569
+	d = int(t) % 86400
 
-pp = pprint.PrettyPrinter()
+	pp = pprint.PrettyPrinter()
 
 #pp.pprint(planes)
 
-for plane in planes:
-	try:
-	        lat = plane["lat"]
-	        lon = plane["lon"]
-		id = "id: "
+	for plane in planes:
 		try:
-			id = id + " " + plane["flight"]
+			lat = plane["lat"]
+			lon = plane["lon"]
+			id = "id: "
+			try:
+				id = id + " " + plane["flight"]
+			except:
+				id = id + " noflight "
+
+			try:
+				id = id + " " + str(plane["altitude"])
+			except:
+				id = id + " noaltitude "
+
+			try:
+				id = id + " " + plane["hex"]
+			except:
+				id = id + " nohex "
+
+			miles = Haversine([lon,lat],me).nm
+			if miles < 20: 
+				print(id,miles)
 		except:
 			pass
-		try:
-			id = id + " " + plane["altitude"]
-		except:
-			pass
-		try:
-			id = id + " " + plane["hex"]
-		except:
-			pass
-		miles = Haversine([lon,lat],me).miles
-		if miles < 50: 
-			print(id,miles)
-	except:
-		pass
 
 #with open("/home/pi/planes.txt", "a") as myfile:
 #    myfile.write("%d,%f,%d,%d\n" % (t,x,d,len(planes)))
+
+
+while true:
+	read_planes()
+	sleep(180)
+	print("--------")
+
