@@ -88,9 +88,7 @@ def read_planes() :
 			if miles < 100: 
 				purl=orgurl+flight
 				purl=purl.strip()
-				print("constructed ",purl)
 				response = requests.post(purl)
-				print("respnse url",response.url)
 				print("report ",response.text,id,miles)
 		except Exception as e: print(e)
 
