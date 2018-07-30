@@ -2,6 +2,11 @@ import json
 import time
 import pprint
 import math
+import requests
+
+#orgurl='https://ae.roplan.es/api/callsign-origin_IATA.php?callsign='
+orgurl="https://ae.roplan.es/api/callsign-origin_IATA.php?callsign="
+desturl='https://ae.roplan.es/api/callsign-des_IATA.php?callsign='
 
 class Haversine:
     '''
@@ -55,8 +60,10 @@ def read_planes() :
 			lat = plane["lat"]
 			lon = plane["lon"]
 			id = "id: "
+			flight=""
 			try:
 				id = id + " " + plane["flight"]
+				flight=plane["flight"]
 			except:
 				id = id + " noflight "
 
@@ -75,18 +82,21 @@ def read_planes() :
 			except:
 				id = id + " notrack "
 
-			miles = Haversine([lon,lat],me).nm
-			if miles < 20: 
-				print(id,miles)
-		except:
-			pass
+			id = id + " lat " + str(lat) + " lon " + str(lon ) 
 
-#with open("/home/pi/planes.txt", "a") as myfile:
-#    myfile.write("%d,%f,%d,%d\n" % (t,x,d,len(planes)))
+			miles = Haversine([lon,lat],me).nm
+			if miles < 100: 
+				purl=orgurl+flight
+				purl=purl.strip()
+				print("constructed ",purl)
+				response = requests.post(purl)
+				print("respnse url",response.url)
+				print("report ",response.text,id,miles)
+		except Exception as e: print(e)
 
 
 while 1:
 	read_planes()
-	time.sleep(30)
+	time.sleep(10)
 	print("--------")
 
