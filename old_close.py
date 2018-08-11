@@ -6,14 +6,12 @@ import requests
 import os
 
 #orgurl='https://ae.roplan.es/api/callsign-origin_IATA.php?callsign='
-orgurl="https://ae.roplan.es/api/callsign-origin_IATA.php?callsign="
 desturl='https://ae.roplan.es/api/callsign-des_IATA.php?callsign='
-
-global api_requests
+orgurl='https://ae.roplan.es/api/callsign-origin_IATA.php?callsign='
+ 
 api_requests=0
-
 log = open("monitor.txt","a")
-log.write("New session %s \n" % ((time.asctime( time.localtime(time.time())))))
+log.write("New session %s\n"%(time.asctime( time.localtime(time.time()) )))
 log.flush()
 
 class Haversine:
@@ -55,6 +53,7 @@ def get_route(flight):
 	turl=turl.strip()
 	rfrom = ''
 	rto = ''
+	route=''
 	global api_requests
 	try :
 		fresponse = requests.post(furl)
@@ -74,7 +73,7 @@ current_planes =  dict()
 
 def read_planes() :
 	with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
-	     data = json.load(f)
+		     data = json.load(f)
 
 
 	planes = data["aircraft"]
@@ -90,8 +89,9 @@ def read_planes() :
 	this_plane = {}
 
 	global api_requests
+	global log
 	api_requests = 0 
-#	print(" planes in list %d" % (len(planes)))
+	print(" planes in list %d" % (len(planes)))
 
 	touched =0
 	for plane in planes:
@@ -129,7 +129,8 @@ def read_planes() :
 
 
 			miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
-			if miles < 25: 
+
+			if miles < 50: 
 				try:
 					route = this_plane["route"]
 				except:
@@ -143,25 +144,29 @@ def read_planes() :
 
 				if miles <= this_plane["miles"]:
 					this_plane["miles"] = miles
+					print("getting closer")
 				else:
+					print(" apogeeee ")
 					try:
 						pdone = this_plane["done"]
 					except:
-						print("%s %s  %s %s  nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["route"],this_plane["miles"]))
-						if this_plane["miles"] < 2.0:
-							print("TWEET")
-							log.write("TWEET   : ")
+						try:
+							print("%s %s  %s  nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["route"],this_plane["miles"]))
+							log.write("%s %s  %s  nearest point %8.2f\n " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["route"],this_plane["miles"]))
+							if this_plane["miles"] < 2.0:
+								print("TWEET")
+								log.write("TWEET\n")
+							log.flush()
+						except Exception as e: print(e)
 
-						log.write("%s %s %s  %s  nearest point %8.2f \n" % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["route"],this_plane["miles"]))
-						log.flush()
 						this_plane["done"]=1
 
 			this_plane["touched"] = time.time()
 			touched+=1
 			current_planes[hex] = this_plane
 				
-		except Exception :
-			pass
+		except Exception as e : print(e)
+		return 1
 
 #as e: print(">",e,plane)
 
@@ -170,19 +175,16 @@ def read_planes() :
 while 1:
 	read_planes()
 	global api_requests
-	time.sleep(10)
 #	print("-------- %d %d" % (api_requests,len(current_planes)))
 	now = time.time()
 	touched=0
 
-	four=0
 	delete_list = []
 	for plane_hex in current_planes:
 		try:
 			plane = current_planes[plane_hex]
 			last_time = plane["touched"]
 			td = now - last_time
-
 			if  td  > 60.0:
 				delete_list.append( plane_hex )
 			touched+=1
@@ -191,8 +193,7 @@ while 1:
 
 	for plane in delete_list:
 		del current_planes[plane]
-
-
+	time.sleep(10)
 
 			
 

@@ -1,17 +1,338 @@
-3c6644       10 3922ed       10 4008b3       10 4cacb4       10 
-040105       10 400980       10 4ca90f       10 4ca8e7       10 
-400afc       10 4ca63b       10 495212       10 4006b4       10 
-e48e81       10 406b3f       10 4ca979       10 4ca739       10 
-4072a5       10 4cace0       10 4cace1       10 780a3f       10 
-4c3daa       10 495295       10 4ca1d0       10 3c6592       10 
-400f9a       10 45ce55       10 4ca2db       10 400f00       10 
-406222       10 440181       10 4ca891       10 40631c       10 
-405ee0       10 40755f       10 4ca7b7       10 4ca7b4       10 
-406320       10 4ca5ac       10 407025       10 4cc0df       10 
-40631f       10 406012       10 406011       10 4ca640       50 
-4ca1bb       10 4ca646       10 4ca549       10 400e59       20 
-407463       10 440097       10 440132       10 4070e2       10 
-4caf8e       60 4ca259       10 4ca848       10 4ca6aa       10 
-4cc2a6       10 4ca84c       10 5110c7       10 40690b       10 
-4009c7       10 503db6       10 4ca65e       10 896472       10 
-4cc2ac       10 400cd8       10 400e4e       10 4caf82       10 
+New session Sat Aug 11 10:20:46 2018 
+Sat Aug 11 10:20:58 2018 BCI238    n/a -> n/a  nearest point    22.44 
+Sat Aug 11 10:22:19 2018 LYD03B    n/a -> n/a  nearest point    21.22 
+Sat Aug 11 10:24:52 2018 EZY54UP   n/a -> n/a  nearest point    21.15 
+Sat Aug 11 10:25:02 2018 GBRBD     n/a -> n/a  nearest point    15.77 
+Sat Aug 11 10:25:52 2018 OXF37     n/a -> n/a  nearest point    11.78 
+Sat Aug 11 10:27:24 2018 GDZKY     n/a -> n/a  nearest point     3.63 
+Sat Aug 11 10:27:44 2018 NRS7152   n/a -> n/a  nearest point     7.13 
+Sat Aug 11 10:28:46 2018 VIR33C    LGW -> ANU  nearest point     2.35 
+TWEET   : Sat Aug 11 10:29:26 2018 RECON21   n/a -> n/a  nearest point     1.44 
+Sat Aug 11 10:29:26 2018 EZY74TW   n/a -> n/a  nearest point    10.09 
+Sat Aug 11 10:29:46 2018 GCTSV     n/a -> n/a  nearest point     6.77 
+Sat Aug 11 10:30:27 2018 UAE43C    n/a -> n/a  nearest point    15.63 
+Sat Aug 11 10:32:38 2018 BAW9VA    LGW -> UVF  nearest point     2.51 
+Sat Aug 11 10:36:41 2018 BAW88MC   LGW -> FNC  nearest point    16.23 
+Sat Aug 11 10:36:51 2018           route ->   nearest point     8.44 
+Sat Aug 11 10:37:31 2018 CFG027    TFS -> FRA  nearest point    11.61 
+Sat Aug 11 10:39:42 2018 N147LD    n/a -> n/a  nearest point    21.32 
+Sat Aug 11 10:39:52 2018 GCPSS     n/a -> n/a  nearest point    24.94 
+Sat Aug 11 10:41:23 2018 BEE4KE    n/a -> n/a  nearest point    18.41 
+Sat Aug 11 10:42:03 2018 GJUFS     n/a -> n/a  nearest point     8.54 
+Sat Aug 11 10:43:25 2018 BLD10     n/a -> n/a  nearest point     6.32 
+Sat Aug 11 10:43:46 2018 GIAGL     n/a -> n/a  nearest point    17.58 
+Sat Aug 11 10:44:17 2018 GAXGS     n/a -> n/a  nearest point    18.08 
+Sat Aug 11 10:44:37 2018 UAE212    IAH -> DXB  nearest point    18.13 
+Sat Aug 11 10:45:08 2018 UAL46     IAH -> SEA  nearest point    13.09 
+Sat Aug 11 10:47:50 2018 AUR3LG    LGW -> GCI  nearest point    18.03 
+Sat Aug 11 10:48:41 2018 TOM088    BJV -> MAN  nearest point     3.99 
+Sat Aug 11 10:49:01 2018 PRI42     PMI -> BLL  nearest point     6.62 
+Sat Aug 11 10:49:51 2018 EZY475X   n/a -> n/a  nearest point    15.70 
+Sat Aug 11 10:51:12 2018 WJA25     LGW -> YYT  nearest point     3.40 
+Sat Aug 11 10:51:42 2018 BEE791L   n/a -> n/a  nearest point     5.85 
+Sat Aug 11 10:55:35 2018 RYR51RG   n/a -> n/a  nearest point    17.62 
+Sat Aug 11 10:56:05 2018 AEA61QZ   n/a -> n/a  nearest point     9.31 
+Sat Aug 11 10:58:48 2018 BEE178M   n/a -> n/a  nearest point    24.15 
+Sat Aug 11 10:59:19 2018 NJE312G   n/a -> n/a  nearest point    13.15 
+Sat Aug 11 10:59:19 2018 VIR16B    MCO -> LGW  nearest point     9.40 
+Sat Aug 11 11:00:19 2018 GEOID     n/a -> n/a  nearest point    11.74 
+Sat Aug 11 11:00:30 2018 DLH485    FRA -> MAN  nearest point     5.26 
+Sat Aug 11 11:00:50 2018 BEE387K   n/a -> n/a  nearest point    21.33 
+Sat Aug 11 11:01:11 2018 BAW17PA   LGW -> ANU  nearest point     3.62 
+Sat Aug 11 11:01:52 2018 GBWOI     n/a -> n/a  nearest point    11.27 
+Sat Aug 11 11:02:23 2018 N957T     n/a -> n/a  nearest point    21.21 
+Sat Aug 11 11:04:25 2018 BAW492U   LHR -> GIB  nearest point    15.57 
+Sat Aug 11 11:04:55 2018 BAW466    LHR -> BIO  nearest point    16.89 
+Sat Aug 11 11:05:37 2018 GCTCH     n/a -> n/a  nearest point     5.70 
+Sat Aug 11 11:05:48 2018 VIR43E    LGW -> LAS  nearest point     4.02 
+Sat Aug 11 11:05:48 2018 GGDER     n/a -> n/a  nearest point    12.71 
+Sat Aug 11 11:07:20 2018 GBJDW     n/a -> n/a  nearest point     7.98 
+Sat Aug 11 11:07:40 2018 GCPSS     n/a -> n/a  nearest point    24.75 
+Sat Aug 11 11:08:11 2018 GSPTT     n/a -> n/a  nearest point     4.78 
+Sat Aug 11 11:08:41 2018 RYR52FM   n/a -> n/a  nearest point    14.45 
+TWEET   : Sat Aug 11 11:09:53 2018 GCTSH     n/a -> n/a  nearest point     1.48 
+Sat Aug 11 11:09:53 2018 TAP339N   n/a -> n/a  nearest point    14.19 
+Sat Aug 11 11:10:04 2018 NFA116    n/a -> n/a  nearest point     2.53 
+Sat Aug 11 11:10:15 2018 BAW252M   NAS -> LHR  nearest point     8.55 
+Sat Aug 11 11:11:27 2018 GBOYH     n/a -> n/a  nearest point     9.47 
+TWEET   : Sat Aug 11 11:11:37 2018 GLOTE     n/a -> n/a  nearest point     0.89 
+Sat Aug 11 11:11:37 2018 GCTSF     n/a -> n/a  nearest point     5.31 
+Sat Aug 11 11:11:37 2018 RYR15WX   n/a -> n/a  nearest point    12.48 
+Sat Aug 11 11:11:37 2018 N141HT    n/a -> n/a  nearest point     7.02 
+Sat Aug 11 11:12:18 2018 BAW10C    JFK -> LGW  nearest point     9.40 
+Sat Aug 11 11:12:58 2018 BCI239    n/a -> n/a  nearest point    16.08 
+Sat Aug 11 11:13:29 2018 AUR523    n/a -> n/a  nearest point    22.44 
+TWEET   : Sat Aug 11 11:14:00 2018 GSTZZ     n/a -> n/a  nearest point     0.62 
+Sat Aug 11 11:14:30 2018 GDGFD     n/a -> n/a  nearest point     5.18 
+Sat Aug 11 11:14:41 2018 BEE9CH    MAN -> BHD  nearest point    15.50 
+Sat Aug 11 11:15:01 2018 KLM713    AMS -> PBM  nearest point    15.63 
+Sat Aug 11 11:15:21 2018 BEE2HA    BHX -> DUS  nearest point    17.96 
+TWEET   : Sat Aug 11 11:17:13 2018 RYR20EP   n/a -> n/a  nearest point     0.78 
+Sat Aug 11 11:18:35 2018 GSKPP     n/a -> n/a  nearest point    11.55 
+Sat Aug 11 11:19:46 2018 OXF20     n/a -> n/a  nearest point     9.34 
+Sat Aug 11 11:21:48 2018 TCX1311   n/a -> n/a  nearest point    24.65 
+Sat Aug 11 11:22:09 2018 IBS3715   LGW -> MAD  nearest point    17.25 
+Sat Aug 11 11:25:01 2018 BAW250    n/a -> n/a  nearest point    12.33 
+Sat Aug 11 11:26:02 2018 TOM046    LGW -> SFB  nearest point     2.36 
+Sat Aug 11 11:27:03 2018 ROJ04     n/a -> n/a  nearest point    15.66 
+Sat Aug 11 11:27:53 2018 EZY34WY   n/a -> n/a  nearest point    10.91 
+Sat Aug 11 11:31:05 2018 GPHVM     n/a -> n/a  nearest point    17.16 
+TWEET   : Sat Aug 11 11:31:06 2018 BEE718B   n/a -> n/a  nearest point     1.18 
+Sat Aug 11 11:31:26 2018 GCTSG     n/a -> n/a  nearest point     5.71 
+TWEET   : Sat Aug 11 11:33:07 2018 N821CC    n/a -> n/a  nearest point     0.84 
+Sat Aug 11 11:33:47 2018 EZY97FZ   n/a -> n/a  nearest point    16.81 
+Sat Aug 11 11:36:31 2018 IBE31SZ   MAD -> MUC  nearest point    16.98 
+Sat Aug 11 11:37:51 2018 GSIXD     n/a -> n/a  nearest point    16.68 
+Sat Aug 11 11:39:13 2018 BEE7LG    n/a -> n/a  nearest point    16.43 
+Sat Aug 11 11:40:14 2018 GOONY     n/a -> n/a  nearest point     7.77 
+Sat Aug 11 11:40:24 2018 VIR29N    LGW -> BGI  nearest point     2.37 
+TWEET   : Sat Aug 11 11:40:34 2018 GBIPV     n/a -> n/a  nearest point     0.88 
+Sat Aug 11 11:41:55 2018 GBOKX     n/a -> n/a  nearest point    24.81 
+Sat Aug 11 11:42:26 2018 BAW43C    LGW -> MCO  nearest point     2.45 
+Sat Aug 11 11:42:56 2018 EZY63YF   n/a -> n/a  nearest point    23.87 
+Sat Aug 11 11:45:50 2018 GBORK     n/a -> n/a  nearest point    24.32 
+Sat Aug 11 11:46:30 2018 CFE3TC    n/a -> n/a  nearest point    24.62 
+Sat Aug 11 11:47:11 2018 AUR520    n/a -> n/a  nearest point    17.36 
+Sat Aug 11 11:47:31 2018 GCFOG     n/a -> n/a  nearest point    19.22 
+Sat Aug 11 11:48:43 2018 GBZTN     n/a -> n/a  nearest point     2.21 
+Sat Aug 11 11:49:04 2018 GJJEN     n/a -> n/a  nearest point    18.77 
+Sat Aug 11 11:49:24 2018 EZY79TB   GVA -> ORY  nearest point    24.11 
+Sat Aug 11 11:49:24 2018 GAMEN     n/a -> n/a  nearest point     7.17 
+Sat Aug 11 11:50:05 2018 GDVTA     n/a -> n/a  nearest point     6.47 
+Sat Aug 11 11:51:57 2018 GCDOK     n/a -> n/a  nearest point    12.75 
+Sat Aug 11 11:51:57 2018 RYR55VR   n/a -> n/a  nearest point    24.64 
+Sat Aug 11 11:52:37 2018 BEE719A   n/a -> n/a  nearest point    17.50 
+Sat Aug 11 11:54:09 2018 GBRBD     n/a -> n/a  nearest point    13.37 
+Sat Aug 11 11:56:30 2018 GEOID     n/a -> n/a  nearest point    14.21 
+Sat Aug 11 11:57:10 2018 GXBAL     n/a -> n/a  nearest point     9.20 
+Sat Aug 11 11:57:51 2018 GAKUJ     n/a -> n/a  nearest point    11.00 
+Sat Aug 11 11:58:01 2018 BAW2155   LGW -> BGI  nearest point     2.54 
+Sat Aug 11 11:58:41 2018 GCPSS     n/a -> n/a  nearest point    22.66 
+Sat Aug 11 12:05:36 2018 AUR524    n/a -> n/a  nearest point    17.84 
+Sat Aug 11 12:05:36 2018 NAX7192   n/a -> n/a  nearest point    11.82 
+Sat Aug 11 12:06:47 2018 RYR81YP   n/a -> n/a  nearest point     5.89 
+TWEET   : Sat Aug 11 12:07:48 2018 GBPIU     n/a -> n/a  nearest point     0.78 
+Sat Aug 11 12:08:49 2018 VIR27X    LGW -> MCO  nearest point     2.51 
+Sat Aug 11 12:10:50 2018 EZY65MV   n/a -> n/a  nearest point    20.71 
+Sat Aug 11 12:14:11 2018 IBE31TL   n/a -> n/a  nearest point    14.97 
+Sat Aug 11 12:17:04 2018 GCPSS     n/a -> n/a  nearest point    23.16 
+Sat Aug 11 12:17:15 2018 EZY81PL   MAN -> MXP  nearest point    15.56 
+Sat Aug 11 12:17:45 2018 BEE271W   n/a -> n/a  nearest point    20.17 
+Sat Aug 11 12:18:57 2018 TCX39HA   n/a -> n/a  nearest point    23.60 
+Sat Aug 11 12:20:38 2018 BEE7JP    SOU -> JER  nearest point    16.57 
+Sat Aug 11 12:21:39 2018 TAP331    LGW -> OPO  nearest point    12.24 
+Sat Aug 11 12:21:49 2018 BEE3KC    BHD -> EMA  nearest point     7.87 
+Sat Aug 11 12:22:40 2018 BEE1UN    n/a -> n/a  nearest point    18.32 
+Sat Aug 11 12:24:10 2018 AUR605Y   LGW -> GCI  nearest point    18.41 
+Sat Aug 11 12:26:52 2018 GSHED     n/a -> n/a  nearest point     2.01 
+Sat Aug 11 12:27:32 2018 GCTCH     n/a -> n/a  nearest point    23.55 
+Sat Aug 11 12:27:42 2018 GHOPE     n/a -> n/a  nearest point     2.99 
+TWEET   : Sat Aug 11 12:30:54 2018 GKARE     n/a -> n/a  nearest point     0.23 
+Sat Aug 11 12:33:26 2018 BAW248    GIG -> LHR  nearest point     7.92 
+Sat Aug 11 12:34:38 2018 XJC32E    n/a -> n/a  nearest point    12.75 
+Sat Aug 11 12:35:18 2018 AUR66V    n/a -> n/a  nearest point    20.88 
+Sat Aug 11 12:36:40 2018 EZY45FM   n/a -> n/a  nearest point     5.65 
+Sat Aug 11 12:38:11 2018 TSC523    LGW -> YYZ  nearest point     2.65 
+Sat Aug 11 12:38:41 2018 TAP363W   n/a -> n/a  nearest point    14.40 
+Sat Aug 11 12:38:52 2018 TFL373    AMS -> BON  nearest point    14.35 
+Sat Aug 11 12:40:12 2018 EZY98AV   n/a -> n/a  nearest point    10.37 
+Sat Aug 11 12:41:43 2018 EZY729Q   n/a -> n/a  nearest point    15.20 
+Sat Aug 11 12:42:14 2018 GCGJP     n/a -> n/a  nearest point     9.79 
+Sat Aug 11 12:44:26 2018 KLM705    AMS -> GIG  nearest point    15.66 
+Sat Aug 11 12:44:26 2018 KLM765    AMS -> AUA  nearest point    17.39 
+Sat Aug 11 12:44:26 2018 LOG9NJ    n/a -> n/a  nearest point    15.87 
+Sat Aug 11 12:46:37 2018 KLM743    BON -> AMS  nearest point    18.69 
+Sat Aug 11 12:47:38 2018 RYR90JJ   n/a -> n/a  nearest point    13.41 
+Sat Aug 11 12:47:48 2018 GBJDW     n/a -> n/a  nearest point    11.45 
+Sat Aug 11 12:50:49 2018 GBHWZ     n/a -> n/a  nearest point    19.59 
+Sat Aug 11 12:58:32 2018 KLM707    AMS -> EZE  nearest point    17.23 
+Sat Aug 11 13:01:25 2018 MAC104    n/a -> n/a  nearest point    20.66 
+Sat Aug 11 13:02:57 2018 KLM757    AMS -> PTY  nearest point    19.55 
+Sat Aug 11 13:02:57 2018 N787CE    n/a -> n/a  nearest point     5.28 
+Sat Aug 11 13:03:47 2018 RYR18LF   STN -> DUB  nearest point     9.73 
+Sat Aug 11 13:04:48 2018 BEE8CM    n/a -> n/a  nearest point    21.22 
+Sat Aug 11 13:05:08 2018 BAW60T    LGW -> TPA  nearest point     2.20 
+Sat Aug 11 13:05:19 2018 BAW490U   LHR -> GIB  nearest point    17.46 
+Sat Aug 11 13:07:49 2018 TOM056    LGW -> MBJ  nearest point     2.41 
+Sat Aug 11 13:10:23 2018 EZY27HC   n/a -> n/a  nearest point    17.09 
+Sat Aug 11 13:10:43 2018 TAP757    CPH -> LIS  nearest point    15.64 
+Sat Aug 11 13:11:55 2018 DLH543    BOG -> FRA  nearest point     2.26 
+Sat Aug 11 13:13:26 2018 EZY86CE   n/a -> n/a  nearest point    15.57 
+Sat Aug 11 13:13:56 2018 KLM744    LIM -> AMS  nearest point    22.60 
+Sat Aug 11 13:14:29 2018 BEE1GR    BHD -> BHX  nearest point    18.06 
+Sat Aug 11 13:14:49 2018 BAW249    LHR -> GIG  nearest point    15.57 
+Sat Aug 11 13:17:32 2018 EXS17WM   n/a -> n/a  nearest point    21.97 
+Sat Aug 11 13:18:13 2018 AAL39     MIA -> DFW  nearest point     4.17 
+Sat Aug 11 13:19:44 2018 CFE6MW    n/a -> n/a  nearest point    20.65 
+Sat Aug 11 13:19:54 2018 GSNUZ     n/a -> n/a  nearest point    10.87 
+Sat Aug 11 13:20:44 2018 EZY592B   n/a -> n/a  nearest point     5.99 
+Sat Aug 11 13:23:16 2018 N759AU    n/a -> n/a  nearest point    17.73 
+Sat Aug 11 13:24:28 2018 GCPSS     n/a -> n/a  nearest point    24.32 
+Sat Aug 11 13:25:09 2018 EIN82A    ORK -> CDG  nearest point    12.53 
+Sat Aug 11 13:25:39 2018 TFL375    AMS -> CUR  nearest point    18.51 
+Sat Aug 11 13:26:49 2018 EZY57PU   CDG -> AGA  nearest point    12.62 
+Sat Aug 11 13:27:10 2018 RYR4H     FCO -> CTA  nearest point    20.17 
+Sat Aug 11 13:30:42 2018 BEE483E   n/a -> n/a  nearest point    18.06 
+Sat Aug 11 13:31:32 2018 VIR15N    LGW -> MCO  nearest point     2.23 
+Sat Aug 11 13:35:37 2018 JFA64A    n/a -> n/a  nearest point    19.51 
+Sat Aug 11 13:38:41 2018 EZY47QK   n/a -> n/a  nearest point    13.64 
+Sat Aug 11 13:42:54 2018 BEE2NG    n/a -> n/a  nearest point    11.25 
+Sat Aug 11 13:43:24 2018 2GODS     n/a -> n/a  nearest point    17.65 
+Sat Aug 11 13:46:06 2018 BAW30T    LGW -> TFS  nearest point    14.03 
+TWEET   : Sat Aug 11 13:46:47 2018 GCTSV     n/a -> n/a  nearest point     1.52 
+Sat Aug 11 13:48:48 2018 BEE4JM    n/a -> n/a  nearest point    10.25 
+Sat Aug 11 13:50:29 2018 BEE47U    n/a -> n/a  nearest point    18.24 
+Sat Aug 11 13:52:00 2018 EZY51AU   n/a -> n/a  nearest point    20.53 
+Sat Aug 11 13:57:22 2018 TAP761    OSL -> LIS  nearest point    16.59 
+Sat Aug 11 13:59:03 2018 BAW2203   LGW -> CUN  nearest point     2.42 
+Sat Aug 11 14:02:26 2018 BAW2668   n/a -> n/a  nearest point    15.69 
+Sat Aug 11 14:02:36 2018 BAW460M   n/a -> n/a  nearest point    15.70 
+Sat Aug 11 14:03:37 2018 TAP663C   AMS -> LIS  nearest point    21.67 
+Sat Aug 11 14:03:57 2018 TOM53D    MAN -> RHO  nearest point     9.30 
+Sat Aug 11 14:07:39 2018 AYY111    n/a -> n/a  nearest point    13.54 
+Sat Aug 11 14:10:01 2018 BAW41C    LGW -> MCO  nearest point     3.28 
+Sat Aug 11 14:10:41 2018 RYR15MR   n/a -> n/a  nearest point    14.32 
+Sat Aug 11 14:13:02 2018 TAP359A   n/a -> n/a  nearest point    15.62 
+Sat Aug 11 14:14:23 2018 BAW2238   LIM -> LGW  nearest point    14.02 
+Sat Aug 11 14:16:35 2018 NRS7016   n/a -> n/a  nearest point    10.52 
+Sat Aug 11 14:18:16 2018 BEE513J   n/a -> n/a  nearest point    19.17 
+Sat Aug 11 14:19:17 2018 EZY83HR   KRK -> BRS  nearest point    14.06 
+Sat Aug 11 14:20:28 2018 BAW72J    LGW -> JER  nearest point    17.53 
+Sat Aug 11 14:21:08 2018 EZY6473   n/a -> n/a  nearest point    12.83 
+Sat Aug 11 14:21:59 2018 TCX68GQ   n/a -> n/a  nearest point    18.00 
+Sat Aug 11 14:24:40 2018 OXF15     n/a -> n/a  nearest point    13.58 
+Sat Aug 11 14:25:31 2018 EZY72DV   n/a -> n/a  nearest point    14.32 
+Sat Aug 11 14:27:42 2018 RYR71TQ   n/a -> n/a  nearest point    12.03 
+Sat Aug 11 14:28:53 2018 GES161Y   n/a -> n/a  nearest point    14.69 
+Sat Aug 11 14:30:04 2018 TOM8BK    LPA -> LGW  nearest point    24.41 
+Sat Aug 11 14:33:15 2018 GCTCH     n/a -> n/a  nearest point     3.31 
+Sat Aug 11 14:33:25 2018 EWG8270   n/a -> n/a  nearest point     2.96 
+Sat Aug 11 14:36:37 2018 TCX19C    TFS -> GLA  nearest point    19.61 
+Sat Aug 11 14:39:20 2018 BEE7HV    EXT -> LCY  nearest point    14.10 
+Sat Aug 11 14:41:11 2018 CFE2293   n/a -> n/a  nearest point    19.63 
+Sat Aug 11 14:41:41 2018 TCX2818   n/a -> n/a  nearest point     2.47 
+Sat Aug 11 14:41:51 2018 RYR573Q   n/a -> n/a  nearest point    12.18 
+Sat Aug 11 14:42:01 2018 GMA772    n/a -> n/a  nearest point     6.70 
+Sat Aug 11 14:46:54 2018 RYR39MY   n/a -> n/a  nearest point    14.43 
+Sat Aug 11 14:50:27 2018 RYR508Z   n/a -> n/a  nearest point     8.01 
+Sat Aug 11 14:51:27 2018 TOM97E    ACE -> BHX  nearest point    17.70 
+Sat Aug 11 14:52:37 2018 SAS2903   n/a -> n/a  nearest point    15.58 
+Sat Aug 11 14:52:47 2018 NAX16L    OSL -> LPA  nearest point    15.57 
+Sat Aug 11 14:54:48 2018 BEE3HB    n/a -> n/a  nearest point     3.29 
+Sat Aug 11 15:03:32 2018 EXS93BN   n/a -> n/a  nearest point     6.22 
+Sat Aug 11 15:06:24 2018 AUR66W    n/a -> n/a  nearest point    14.78 
+TWEET   : Sat Aug 11 15:07:45 2018 SLM993    AMS -> PBM  nearest point     1.07 
+Sat Aug 11 15:09:05 2018 AUR553    n/a -> n/a  nearest point    18.45 
+Sat Aug 11 15:09:15 2018 71LL      n/a -> n/a  nearest point     9.58 
+Sat Aug 11 15:11:37 2018 TRA51T    n/a -> n/a  nearest point    23.86 
+Sat Aug 11 15:14:41 2018 NAX8UE    OSL -> RAK  nearest point    20.60 
+Sat Aug 11 15:14:41 2018 GCTSV     n/a -> n/a  nearest point    18.77 
+Sat Aug 11 15:17:03 2018 GBRXD     n/a -> n/a  nearest point    17.16 
+Sat Aug 11 15:17:13 2018 NAX3WE    ARN -> AGP  nearest point    17.39 
+TWEET   : Sat Aug 11 15:19:04 2018 TOM7AT    MAN -> GRO  nearest point     0.67 
+Sat Aug 11 15:20:14 2018 MHOME     n/a -> n/a  nearest point    15.38 
+Sat Aug 11 15:20:14 2018 BEE3TY    n/a -> n/a  nearest point     2.69 
+TWEET   : Sat Aug 11 15:22:56 2018 NJE6XK    n/a -> n/a  nearest point     1.19 
+Sat Aug 11 15:29:19 2018 TOM34B    EMA -> FAO  nearest point    15.34 
+Sat Aug 11 15:30:59 2018 BEE172G   n/a -> n/a  nearest point    19.56 
+Sat Aug 11 15:34:22 2018 BAW2682   LGW -> PRN  nearest point    19.54 
+Sat Aug 11 15:35:02 2018 BAW502    LHR -> LIS  nearest point    13.34 
+Sat Aug 11 15:38:03 2018 BEE4TV    EMA -> EGPG  nearest point    13.38 
+Sat Aug 11 15:45:27 2018 RYR2631   STN -> PDL  nearest point    14.01 
+Sat Aug 11 15:45:58 2018 EXS69A    n/a -> n/a  nearest point    23.77 
+Sat Aug 11 15:46:38 2018 EXS633    OSL -> ALC  nearest point    11.47 
+Sat Aug 11 15:50:41 2018 AMX007    MEX -> LHR  nearest point     8.57 
+Sat Aug 11 15:53:12 2018 BAW21PJ   n/a -> n/a  nearest point     5.69 
+Sat Aug 11 15:55:55 2018 BCI252    GCI -> SOU  nearest point    20.67 
+Sat Aug 11 15:56:36 2018 BAW273A   LGW -> ACE  nearest point    18.93 
+Sat Aug 11 15:57:06 2018 EXS613    LDE -> DUB  nearest point     7.66 
+Sat Aug 11 15:57:26 2018 GCTCH     n/a -> n/a  nearest point     3.94 
+Sat Aug 11 15:58:36 2018 BAW462    LHR -> MAD  nearest point    16.14 
+Sat Aug 11 15:59:27 2018 N569JM    n/a -> n/a  nearest point    13.87 
+Sat Aug 11 15:59:37 2018 RYR945M   n/a -> n/a  nearest point    11.54 
+Sat Aug 11 15:59:47 2018 TCX1SK    n/a -> n/a  nearest point    10.48 
+Sat Aug 11 16:02:59 2018 BEE8VN    n/a -> n/a  nearest point    20.77 
+Sat Aug 11 16:03:30 2018 AUR554    n/a -> n/a  nearest point    18.10 
+Sat Aug 11 16:05:51 2018 BEE1AD    n/a -> n/a  nearest point    15.59 
+TWEET   : Sat Aug 11 16:06:52 2018 TCX52JM   n/a -> n/a  nearest point     1.38 
+Sat Aug 11 16:07:43 2018 BEE2TR    EDI -> LPL  nearest point    12.55 
+Sat Aug 11 16:07:53 2018 BEE7HC    n/a -> n/a  nearest point    21.29 
+Sat Aug 11 16:09:13 2018 EXS1507   n/a -> n/a  nearest point     7.36 
+Sat Aug 11 16:12:16 2018 GCYPM     n/a -> n/a  nearest point     2.90 
+Sat Aug 11 16:14:08 2018 EZY8695   n/a -> n/a  nearest point    16.31 
+Sat Aug 11 16:14:28 2018 BEE457E   n/a -> n/a  nearest point    18.50 
+TWEET   : Sat Aug 11 16:14:38 2018 TOM5BX    KAO -> LGW  nearest point     0.91 
+Sat Aug 11 16:16:49 2018 AUR559    n/a -> n/a  nearest point    19.06 
+Sat Aug 11 16:17:29 2018 EWG8271   n/a -> n/a  nearest point     4.02 
+Sat Aug 11 16:19:00 2018 RYR752G   n/a -> n/a  nearest point     6.93 
+Sat Aug 11 16:20:21 2018 MSAXY     n/a -> n/a  nearest point    13.30 
+Sat Aug 11 16:22:32 2018 BEE8CL    NQY -> STN  nearest point    13.02 
+TWEET   : Sat Aug 11 16:24:48 2018 AXG11     n/a -> n/a  nearest point     1.06 
+Sat Aug 11 16:26:01 2018 VOE9509   BOH -> LEAP  nearest point    21.42 
+Sat Aug 11 16:26:22 2018 EZY53ZR   n/a -> n/a  nearest point    14.14 
+TWEET   : Sat Aug 11 16:27:02 2018 RYR455Z   n/a -> n/a  nearest point     0.91 
+Sat Aug 11 16:27:12 2018 IBE31FZ   n/a -> n/a  nearest point    18.66 
+Sat Aug 11 16:28:02 2018 IBK6ZM    n/a -> n/a  nearest point    11.67 
+Sat Aug 11 16:28:42 2018 RYR390J   n/a -> n/a  nearest point    16.85 
+Sat Aug 11 16:29:14 2018 BEE1TZ    n/a -> n/a  nearest point    24.46 
+Sat Aug 11 16:31:07 2018 STK4SH    ORK -> SOU  nearest point    22.52 
+Sat Aug 11 16:31:17 2018 BEE214H   n/a -> n/a  nearest point    22.07 
+Sat Aug 11 16:32:59 2018 RYR17BM   n/a -> n/a  nearest point     2.57 
+Sat Aug 11 16:33:20 2018 AUR27C    STN -> GCI  nearest point    18.41 
+Sat Aug 11 16:34:00 2018 BEE429Y   n/a -> n/a  nearest point    18.82 
+Sat Aug 11 16:35:30 2018 EZY84RA   n/a -> n/a  nearest point    10.99 
+Sat Aug 11 16:40:04 2018 BAW454    GLA -> BCN  nearest point    18.94 
+Sat Aug 11 16:40:44 2018 GBJNZ     n/a -> n/a  nearest point    19.64 
+Sat Aug 11 16:42:44 2018 BAW508    LHR -> FAO  nearest point    13.73 
+Sat Aug 11 16:44:25 2018 GBFKB     n/a -> n/a  nearest point     8.78 
+Sat Aug 11 16:45:27 2018 GBMIW     n/a -> n/a  nearest point     2.87 
+Sat Aug 11 16:46:58 2018 BEE937D   n/a -> n/a  nearest point    22.15 
+Sat Aug 11 16:48:09 2018 EZY75UJ   n/a -> n/a  nearest point    10.44 
+Sat Aug 11 16:48:09 2018 EXS687    EMA -> FAO  nearest point    18.00 
+Sat Aug 11 16:51:42 2018 SSZ4S     n/a -> n/a  nearest point    16.79 
+Sat Aug 11 16:53:13 2018 RYR66HR   n/a -> n/a  nearest point    15.59 
+Sat Aug 11 16:54:03 2018 AUR6EM    n/a -> n/a  nearest point    17.52 
+Sat Aug 11 16:54:43 2018 BEE2TL    n/a -> n/a  nearest point    18.41 
+Sat Aug 11 16:56:35 2018 NRS7053   n/a -> n/a  nearest point     2.38 
+Sat Aug 11 16:58:36 2018 BEE2WP    n/a -> n/a  nearest point    15.63 
+Sat Aug 11 16:58:46 2018 EXS9YJ    n/a -> n/a  nearest point    10.79 
+Sat Aug 11 17:02:09 2018 GBWNB     n/a -> n/a  nearest point    17.96 
+Sat Aug 11 17:02:19 2018 BCI255    SOU -> GCI  nearest point    20.79 
+Sat Aug 11 17:02:19 2018 AUR607Y   LGW -> GCI  nearest point    18.42 
+Sat Aug 11 17:03:40 2018 N569JM    n/a -> n/a  nearest point     7.47 
+Sat Aug 11 17:04:40 2018 BAW74J    LGW -> JER  nearest point    18.44 
+New session Sat Aug 11 17:10:54 2018 
+Sat Aug 11 17:11:45 2018 BEE6TA   400e38  n/a -> n/a  nearest point    17.97 
+Sat Aug 11 17:12:16 2018 BAW152L  407022  LGW -> AGP  nearest point    10.07 
+Sat Aug 11 17:13:21 2018 BEE6RJ   4072b8  LPL -> IOM  nearest point     8.76 
+Sat Aug 11 17:15:12 2018 RAM803   020053  LGW -> CMN  nearest point     9.63 
+Sat Aug 11 17:16:13 2018 EXS54AR  4070e6  n/a -> n/a  nearest point    15.59 
+Sat Aug 11 17:16:24 2018 AUR560   400b22  n/a -> n/a  nearest point    18.31 
+Sat Aug 11 17:16:34 2018 BRNCO50  ae08da  n/a -> n/a  nearest point    19.31 
+Sat Aug 11 17:17:44 2018 BEE9UT   405dea  n/a -> n/a  nearest point    18.40 
+TWEET   : Sat Aug 11 17:20:49 2018 EWG76B   3c4a2e  n/a -> n/a  nearest point     0.24 
+Sat Aug 11 17:21:19 2018 EZY92MF  40666b  n/a -> n/a  nearest point    18.24 
+Sat Aug 11 17:21:19 2018 BEE3MN   405b8c  LCY -> EDI  nearest point    21.07 
+Sat Aug 11 17:22:51 2018 RYR56ZF  4caca9  DUB -> GLA  nearest point     7.03 
+Sat Aug 11 17:23:31 2018 TAP341   4951d9  LGW -> LIS  nearest point    16.91 
+Sat Aug 11 17:25:33 2018 GNIOG    404c54  n/a -> n/a  nearest point     2.13 
+Sat Aug 11 17:28:07 2018 EZY85TY  40666d  n/a -> n/a  nearest point    15.56 
+Sat Aug 11 17:29:58 2018 RYR856H  4cac99  n/a -> n/a  nearest point    14.99 
+Sat Aug 11 17:30:18 2018 EZY8683  4409c0  n/a -> n/a  nearest point    15.59 
+Sat Aug 11 17:33:14 2018 BEE4CP   405f79  GLA -> BHX  nearest point    19.00 
+Sat Aug 11 17:35:04 2018 BAW2273  4006c1  LGW -> JFK  nearest point     2.42 
+Sat Aug 11 17:35:14 2018 EZY48YF  400cd3  SXF -> LTN  nearest point    15.58 
+Sat Aug 11 17:36:04 2018 AUR573   406f9f  n/a -> n/a  nearest point    18.33 
+Sat Aug 11 17:38:26 2018 KLM920   485779  SOU -> AMS  nearest point    23.45 
+Sat Aug 11 17:42:02 2018 STK41SH  4caada  SOU -> ORK  nearest point    20.18 
+Sat Aug 11 17:42:42 2018 BEE21PL  40100a  n/a -> n/a  nearest point    20.41 
+Sat Aug 11 17:42:53 2018 BAW464   400a66  LHR -> MAD  nearest point    14.00 
+Sat Aug 11 17:47:15 2018 BEE3NY   400a79  BHD -> LPL  nearest point    19.72 
+Sat Aug 11 17:55:41 2018 N605DA   a7da1e  n/a -> n/a  nearest point     4.79 
+Sat Aug 11 17:58:24 2018 NRS7151  4074d1  n/a -> n/a  nearest point     2.39 
+Sat Aug 11 17:58:54 2018 BEE593D  40610e  n/a -> n/a  nearest point    23.97 
+Sat Aug 11 17:59:34 2018 BEE42KC  405518  n/a -> n/a  nearest point    15.20 
+Sat Aug 11 18:01:05 2018 EZY16WL  400d8c  n/a -> n/a  nearest point    11.39 
+Sat Aug 11 18:03:35 2018 BAW96FA  406cdd  n/a -> n/a  nearest point    15.07 
+Sat Aug 11 18:08:50 2018 BEE8TH   400ad2  n/a -> n/a  nearest point    22.10 
+Sat Aug 11 18:09:20 2018 AUR78B   405fb6  GCI -> MAN  nearest point    20.07 
