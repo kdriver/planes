@@ -4,10 +4,28 @@ import pprint
 import math
 import requests
 import os
+import pprint
+import sqlite3
+
+from birdy.twitter import UserClient
+import twittertokens
+
+client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
+                    twittertokens.ACCESS_TOKEN,twittertokens.ACCESS_TOKEN_SECRET)
+
+try:
+        conn = sqlite3.connect('StandingData.sqb')
+        print("connected")
+except Exception as e: 
+	print (e)
+	exit()
+
 
 #orgurl='https://ae.roplan.es/api/callsign-origin_IATA.php?callsign='
 orgurl="https://ae.roplan.es/api/callsign-origin_IATA.php?callsign="
 desturl='https://ae.roplan.es/api/callsign-des_IATA.php?callsign='
+plane_url='https://ae.roplan.es/api/hex-type.php?hex='
+reg_url='https://ae.roplan.es/api/hex-reg.php?hex='
 
 global api_requests
 api_requests=0
@@ -48,7 +66,26 @@ class Haversine:
 
 me=[-1.95917,50.83583]
 
+def get_reg(flight):
+	url=reg_url+flight
+	url=url.strip()
+	response=requests.post(url)
+	return response.text
+	
+def get_plane(flight):
+	url=plane_url+flight
+	url=url.strip()
+	response=requests.post(url)
+	return response.text
+	
 def get_route(flight):
+	global conn
+	answer = conn.execute("SELECT FromAirportName,ToAirportName  FROM RouteView WHERE Callsign = '%s'" % flight.strip() )
+	txt = answer.fetchone()
+	if txt  != None:
+		route = "%s -> %s" % txt
+		return route
+
 	furl=orgurl+flight
 	furl=furl.strip()
 	turl=desturl+flight
@@ -74,7 +111,10 @@ current_planes =  dict()
 
 def read_planes() :
 	with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
-	     data = json.load(f)
+		try:
+			data = json.load(f)
+		except:
+			return
 
 
 	planes = data["aircraft"]
@@ -90,6 +130,7 @@ def read_planes() :
 	this_plane = {}
 
 	global api_requests
+	global log
 	api_requests = 0 
 #	print(" planes in list %d" % (len(planes)))
 
@@ -118,7 +159,7 @@ def read_planes() :
 				pass
 
 			try:
-				this_plane["altitude"] = plane["altitude"]
+				this_plane["altitude"] = plane["alt_baro"]
 			except:
 				pass
 
@@ -131,7 +172,21 @@ def read_planes() :
 			miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
 			if miles < 25: 
 				try:
-					route = this_plane["route"]
+					route = this_plane["plane"]
+				except:
+					response = get_plane(this_plane["hex"])
+					if response != '':
+						this_plane["plane"]=response
+				try:
+					reg = this_plane["reg"]
+				except:
+					response = get_reg(this_plane["hex"])
+					if response != '':
+						this_plane["reg"]=response
+
+
+				try:
+					 route = this_plane["route"]
 				except:
 					response = get_route(this_plane["flight"])
 					if response != '':
@@ -143,24 +198,32 @@ def read_planes() :
 
 				if miles <= this_plane["miles"]:
 					this_plane["miles"] = miles
+					try:
+						del this_plane["done"]
+					except:
+						pass
 				else:
 					try:
 						pdone = this_plane["done"]
 					except:
-						print("%s %s  %s %s  nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["route"],this_plane["miles"]))
-						if this_plane["miles"] < 2.0:
-							print("TWEET")
-							log.write("TWEET   : ")
-
-						log.write("%s %s %s  %s  nearest point %8.2f \n" % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["route"],this_plane["miles"]))
-						log.flush()
 						this_plane["done"]=1
+						pd = "%s %s %s %s %s %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["altitude"],this_plane["miles"])
+						if this_plane["miles"] < 2.0:
+							sys.stout.write("TWEET   :")
+							log.write("TWEET   : ")
+							try:
+								response = client.api.statuses.update.post(status=pd)
+							except Exception as e: print(e)
+
+						print(pd)
+						log.write("%s \n" % (pd) )
+						log.flush()
 
 			this_plane["touched"] = time.time()
 			touched+=1
 			current_planes[hex] = this_plane
 				
-		except Exception :
+		except :
 			pass
 
 #as e: print(">",e,plane)
