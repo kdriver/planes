@@ -184,7 +184,6 @@ def read_planes() :
 					if response != '':
 						this_plane["reg"]=response
 
-
 				try:
 					 route = this_plane["route"]
 				except:
@@ -207,7 +206,7 @@ def read_planes() :
 						pdone = this_plane["done"]
 					except:
 						this_plane["done"]=1
-						pd = "%s %s %s %s %s %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["altitude"],this_plane["miles"])
+						pd = "%s %s %s %s %s %s %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
 						if this_plane["miles"] < 2.0:
 							sys.stout.write("TWEET   :")
 							log.write("TWEET   : ")
