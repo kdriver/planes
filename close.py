@@ -20,6 +20,12 @@ except Exception as e:
 	print (e)
 	exit()
 
+import signal
+
+def handler(signum,stack):
+        print("caught it")
+
+signal.signal(signal.SIGUSR1,handler)
 
 #orgurl='https://ae.roplan.es/api/callsign-origin_IATA.php?callsign='
 orgurl="https://ae.roplan.es/api/callsign-origin_IATA.php?callsign="
@@ -33,6 +39,17 @@ api_requests=0
 log = open("monitor.txt","a")
 log.write("New session %s \n" % ((time.asctime( time.localtime(time.time())))))
 log.flush()
+
+def degrees_to_cardinal(x):
+    '''
+    note: this is highly approximate...
+    '''
+
+    d = float(x)
+    dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+    ix = int((d + 11.25)/22.5)
+    return dirs[ix % 16]
 
 class Haversine:
     '''
@@ -119,12 +136,10 @@ def read_planes() :
 
 	planes = data["aircraft"]
 
-	t = time.time()
-	x = t/86400  + 25569
-	d = int(t) % 86400
-
-	pp = pprint.PrettyPrinter()
-
+#	t = time.time()
+#	x = t/86400  + 25569
+#	d = int(t) % 86400
+#	pp = pprint.PrettyPrinter()
 #pp.pprint(planes)
 
 	this_plane = {}
@@ -169,61 +184,65 @@ def read_planes() :
 				pass
 
 
-			miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
-			if miles < 25: 
-				try:
-					route = this_plane["plane"]
-				except:
-					response = get_plane(this_plane["hex"])
-					if response != '':
-						this_plane["plane"]=response
-				try:
-					reg = this_plane["reg"]
-				except:
-					response = get_reg(this_plane["hex"])
-					if response != '':
-						this_plane["reg"]=response
+                        try: 
+                                miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
+                                if miles < 25: 
+                                        try:
+                                                route = this_plane["plane"]
+                                        except:
+                                                response = get_plane(this_plane["hex"])
+                                                if response != '':
+                                                        this_plane["plane"]=response
+                                        try:
+                                                reg = this_plane["reg"]
+                                        except:
+                                                response = get_reg(this_plane["hex"])
+                                                if response != '':
+                                                        this_plane["reg"]=response
 
-				try:
-					 route = this_plane["route"]
-				except:
-					response = get_route(this_plane["flight"])
-					if response != '':
-						this_plane["route"]=response
-				try:
-					old_miles = this_plane["miles"]
-				except:
-					this_plane["miles"] = miles
+                                        try:
+                                                 route = this_plane["route"]
+                                        except:
+                                                response = get_route(this_plane["flight"])
+                                                if response != '':
+                                                        this_plane["route"]=response
+                                        try:
+                                                old_miles = this_plane["miles"]
+                                        except:
+                                                this_plane["miles"] = miles
 
-				if miles <= this_plane["miles"]:
-					this_plane["miles"] = miles
-					try:
-						del this_plane["done"]
-					except:
-						pass
-				else:
-					try:
-						pdone = this_plane["done"]
-					except:
-						this_plane["done"]=1
-						pd = "%s %s %s %s %s %s %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
-						if this_plane["miles"] < 2.0:
-							sys.stout.write("TWEET   :")
-							log.write("TWEET   : ")
-							try:
-								response = client.api.statuses.update.post(status=pd)
-							except Exception as e: print(e)
+                                        if miles <= this_plane["miles"]:
+                                                this_plane["miles"] = miles
+                                                try:
+                                                        del this_plane["done"]
+                                                except:
+                                                        pass
+                                        else:
+                                                try:
+                                                        pdone = this_plane["done"]
+                                                except:
+                                                        this_plane["done"]=1
+                                                        pd = "%s %s %s %s %s %s track %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+                                                        if this_plane["miles"] < 2.0:
+                                                                print("TWEET :")
+                                                                log.write("TWEET   : ")
+                                                                try:
+                                                                        response = client.api.statuses.update.post(status=pd)
+                                                                except Exception as e: print(e)
 
-						print(pd)
-						log.write("%s \n" % (pd) )
-						log.flush()
+                                                        print(pd)
+                                                        log.write("%s \n" % (pd) )
+                                                        log.flush()
+                        except:
+                                pass
 
 			this_plane["touched"] = time.time()
 			touched+=1
 			current_planes[hex] = this_plane
 				
-		except :
-			pass
+                except  :
+                    pass
+#                Exception as e: print("> %s " % e)
 
 #as e: print(">",e,plane)
 
