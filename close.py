@@ -23,6 +23,11 @@ except Exception as e:
 import signal
 
 def handler(signum,stack):
+        dmp = open("dump.txt","w")
+        for plane_hex in current_planes:
+            plane=current_planes[plane_hex]
+            dmp.write("%s\n" % plane)
+        dmp.close()
         print("caught it")
 
 signal.signal(signal.SIGUSR1,handler)
@@ -218,19 +223,22 @@ def read_planes() :
                                                 except:
                                                         pass
                                         else:
+                                                token=""
                                                 try:
                                                         pdone = this_plane["done"]
                                                 except:
                                                         this_plane["done"]=1
                                                         pd = "%s %s %s %s %s %s track %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
                                                         if this_plane["miles"] < 2.0:
-                                                                print("TWEET :")
+                                                                token="\033[1;32;40m"
+#                                                                print("TWEET :")
                                                                 log.write("TWEET   : ")
                                                                 try:
                                                                         response = client.api.statuses.update.post(status=pd)
                                                                 except Exception as e: print(e)
 
-                                                        print(pd)
+                                                        print("%s%s\033[0m" % (token,pd))
+
                                                         log.write("%s \n" % (pd) )
                                                         log.flush()
                         except:
@@ -251,7 +259,7 @@ def read_planes() :
 while 1:
 	read_planes()
 	global api_requests
-	time.sleep(10)
+	time.sleep(5)
 #	print("-------- %d %d" % (api_requests,len(current_planes)))
 	now = time.time()
 	touched=0
