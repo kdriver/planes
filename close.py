@@ -13,6 +13,15 @@ import twittertokens
 client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
                     twittertokens.ACCESS_TOKEN,twittertokens.ACCESS_TOKEN_SECRET)
 
+def tweet(client,text):
+	response=''
+	try:
+		response = client.api.statuses.update.post(status=text)
+	except Exception as e:
+		print(e)
+		print("failed to tweet\n")
+	return response
+	
 try:
         conn = sqlite3.connect('StandingData.sqb')
         print("connected")
@@ -255,6 +264,8 @@ def read_planes() :
 #as e: print(">",e,plane)
 
 #os.system('clear')
+
+tweet(client,"up and running\n")
 
 while 1:
 	read_planes()
