@@ -4,14 +4,19 @@ import pprint
 import math
 import requests
 import os
-import pprint
 import sqlite3
+
+from influxdb import InfluxDBClient
 
 from birdy.twitter import UserClient
 import twittertokens
 
 client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
                     twittertokens.ACCESS_TOKEN,twittertokens.ACCESS_TOKEN_SECRET)
+
+influx= InfluxDBClient("192.168.0.106",8086,'','',"planes")
+influx_local = InfluxDBClient("localhost",8086,'','',"planes")
+
 
 def tweet(client,text):
 	response=''
@@ -47,11 +52,11 @@ desturl='https://ae.roplan.es/api/callsign-des_IATA.php?callsign='
 plane_url='https://ae.roplan.es/api/hex-type.php?hex='
 reg_url='https://ae.roplan.es/api/hex-reg.php?hex='
 
-global api_requests
 api_requests=0
 
+the_time = time.asctime( time.localtime(time.time()))
 log = open("monitor.txt","a")
-log.write("New session %s \n" % ((time.asctime( time.localtime(time.time())))))
+log.write("New session %s \n" % (the_time))
 log.flush()
 
 def degrees_to_cardinal(x):
@@ -98,24 +103,34 @@ class Haversine:
 me=[-1.95917,50.83583]
 
 def get_reg(flight):
+#	return ' '
 	url=reg_url+flight
 	url=url.strip()
+	print("D: get reg %s " % url )
 	response=requests.post(url)
+	print("D: got  reg %s " % response.text )
 	return response.text
 	
 def get_plane(flight):
+#	return ' '
 	url=plane_url+flight
 	url=url.strip()
+	print("D: get plane %s " % url )
 	response=requests.post(url)
+	print("D: got plane %s " % response.text )
 	return response.text
 	
 def get_route(flight):
 	global conn
+	print("D: get route %s " % flight )
 	answer = conn.execute("SELECT FromAirportName,ToAirportName  FROM RouteView WHERE Callsign = '%s'" % flight.strip() )
 	txt = answer.fetchone()
 	if txt  != None:
 		route = "%s -> %s" % txt
+		print("D: got route from sql %s " % route )
 		return route
+
+	return ' '
 
 	furl=orgurl+flight
 	furl=furl.strip()
@@ -135,10 +150,25 @@ def get_route(flight):
 		route = rfrom + " -> " + rto
 	except Exception as e: print("oh no", e)
 
+	print("D: got route %s " % route )
 	return route
 
 
 current_planes =  dict()
+
+
+def record_planes(num,per_sec):
+	json_body = [ { "measurement" : "count",  "tags" : {}, "fields" : { "value" : num , "msgspersec" : per_sec} } ]
+	global record_period
+	record_period= record_period - 1 
+	if ( record_period <= 0 ):
+		result = influx.write_points(json_body)
+		result = influx_local.write_points(json_body)
+		record_period = 6
+#	print("Result: {0}".format(result))
+
+old_time=0
+old_messages=0
 
 def read_planes() :
 	with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
@@ -148,23 +178,33 @@ def read_planes() :
 			return
 
 
+	time_now = data["now"]
+	messages_now = data["messages"]
 	planes = data["aircraft"]
-
-#	t = time.time()
-#	x = t/86400  + 25569
-#	d = int(t) % 86400
-#	pp = pprint.PrettyPrinter()
-#pp.pprint(planes)
 
 	this_plane = {}
 
 	global api_requests
 	global log
+	global old_time
+	global old_messages
 	api_requests = 0 
-#	print(" planes in list %d" % (len(planes)))
 
+	num_planes = len(planes ) 
+	time_diff = time_now - old_time
+	messages_diff = messages_now - old_messages
+	msgs_per_sec = messages_diff / time_diff
+
+	print(" planes in list %d msgs per sec %f" % (num_planes,msgs_per_sec ))
+
+	old_time = time_now
+	old_messages = messages_now
+	
+	record_planes(num_planes,msgs_per_sec)
 	touched =0
+	iter=0
 	for plane in planes:
+		iter = iter +1
 		try:
 			hex = plane["hex"]
 			try:
@@ -225,6 +265,8 @@ def read_planes() :
                                         except:
                                                 this_plane["miles"] = miles
 
+#					print("D: plane %d %s  distance %f old %f " % (iter,this_plane["plane"],miles,this_plane["miles"]))
+
                                         if miles <= this_plane["miles"]:
                                                 this_plane["miles"] = miles
                                                 try:
@@ -243,7 +285,8 @@ def read_planes() :
 #                                                                print("TWEET :")
                                                                 log.write("TWEET   : ")
                                                                 try:
-                                                                        response = client.api.statuses.update.post(status=pd)
+									tweet(client,pd)
+#                                                                        response = client.api.statuses.update.post(status=pd)
                                                                 except Exception as e: print(e)
 
                                                         print("%s%s\033[0m" % (token,pd))
@@ -265,11 +308,14 @@ def read_planes() :
 
 #os.system('clear')
 
-tweet(client,"up and running\n")
+tweet(client,"up and running %s\n" %(the_time))
+
+record_period=6
 
 while 1:
 	read_planes()
 	global api_requests
+	global record_period
 	time.sleep(5)
 #	print("-------- %d %d" % (api_requests,len(current_planes)))
 	now = time.time()
