@@ -162,9 +162,13 @@ def record_planes(num,per_sec):
 	global record_period
 	record_period= record_period - 1 
 	if ( record_period <= 0 ):
-		result = influx.write_points(json_body)
-		result = influx_local.write_points(json_body)
 		record_period = 6
+                try:
+                    result = influx.write_points(json_body)
+                    result = influx_local.write_points(json_body)
+                except:
+                    print("Error writing to influx %s \n" % ( the_time ))
+                    return
 #	print("Result: {0}".format(result))
 
 old_time=0
@@ -175,9 +179,10 @@ def read_planes() :
 		try:
 			data = json.load(f)
 		except:
+                        print("error - cant open arcraft.json")
 			return
 
-
+        the_time = time.asctime( time.localtime(time.time()))
 	time_now = data["now"]
 	messages_now = data["messages"]
 	planes = data["aircraft"]
@@ -312,7 +317,31 @@ tweet(client,"up and running %s\n" %(the_time))
 
 record_period=6
 
+
+last_updated=time.time()
+interval=60*60*24.0
+
+import subprocess
+
+def update_routes():
+        tnow = time.time()
+        global last_updated
+        if ( tnow - last_updated ) > interval:
+            last_updated = tnow  
+            global conn
+            print("refresh the route database ")
+            try:
+                conn.close() 
+                print subprocess.check_output(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                print subprocess.check_output(["gunzip","-f","./StandingData.sqb.gz"])
+                conn = sqlite3.connect('StandingData.sqb')
+            except:
+                print("Complete disaster - cant re open route database")
+                
+
+
 while 1:
+        update_routes()
 	read_planes()
 	global api_requests
 	global record_period
