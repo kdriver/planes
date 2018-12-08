@@ -24,7 +24,14 @@ def tweet(client,text):
 		response = client.api.statuses.update.post(status=text)
 	except Exception as e:
 		print(e)
-		print("failed to tweet\n")
+                print("failed to tweet : retry\n")
+                try:
+		    response = client.api.statuses.update.post(status=text)
+                    print("tweet retry ok\n")
+                except Exception as e:
+                    print(e)
+                    print("failed to tweet a second time\n")
+
 	return response
 	
 try:
