@@ -17,6 +17,19 @@ client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
 influx= InfluxDBClient("192.168.0.106",8086,'','',"planes")
 influx_local = InfluxDBClient("localhost",8086,'','',"planes")
 
+def measure_temp():
+            temp = os.popen("vcgencmd measure_temp").readline()
+            t = temp.replace("temp=","")
+            t = float(t.replace("'C",""))
+            json_body = [
+                        {
+                                    "measurement": "count",
+                                            "fields": {
+                                                            "rpi_temp":  t
+                                                  }
+                                                }]
+            influx.write_points(json_body)
+            return t
 
 def tweet(client,text):
 	response=''
@@ -325,8 +338,9 @@ tweet(client,"up and running %s\n" %(the_time))
 record_period=6
 
 
-last_updated=time.time()
 interval=60*60*24.0
+#force database update on restart
+last_updated=time.time()  - 2*interval
 
 import subprocess
 
@@ -336,20 +350,32 @@ def update_routes():
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
             global conn
-            print("refresh the route database ")
+            print("refresh the route database %s"  % the_time )
             try:
                 conn.close() 
                 print subprocess.check_output(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
-                print subprocess.check_output(["gunzip","-f","./StandingData.sqb.gz"])
+                print subprocess.check_output(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
+                print("reconnected to the route database %s"  % the_time )
             except:
                 print("Complete disaster - cant re open route database")
                 
+#force temp measurement on startup
+last_recorded_temp_time = time.time() - 120
+
+def record_temp():
+    tnow = time.time()
+    global last_recorded_temp_time
+    if ( (tnow - last_recorded_temp_time) > 60 ) :
+        print("record temp %f " % measure_temp())
+        last_recorded_temp_time = tnow
+
 
 
 while 1:
         update_routes()
 	read_planes()
+	record_temp()
 	global api_requests
 	global record_period
 	time.sleep(5)
