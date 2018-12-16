@@ -17,6 +17,8 @@ client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
 influx= InfluxDBClient("192.168.0.106",8086,'','',"planes")
 influx_local = InfluxDBClient("localhost",8086,'','',"planes")
 
+me=[-1.95917,50.83583]
+
 def measure_temp():
             temp = os.popen("vcgencmd measure_temp").readline()
             t = temp.replace("temp=","")
@@ -29,6 +31,7 @@ def measure_temp():
                                                   }
                                                 }]
             influx.write_points(json_body)
+            influx_local.write_points(json_body)
             return t
 
 def tweet(client,text):
@@ -120,7 +123,6 @@ class Haversine:
         self.feet=self.miles*5280               # output distance in feet
         self.nm=self.miles/1.15               # output distance in feet
 
-me=[-1.95917,50.83583]
 
 def get_reg(flight):
 #	return ' '
@@ -189,8 +191,15 @@ def record_planes(num,per_sec):
                 except:
                     print("Error writing to influx %s \n" % ( the_time ))
                     return
-#	print("Result: {0}".format(result))
 
+def record_overhead(distance):
+                json_body = [ { "measurement" : "count",  "tags" : {"duck"}, "fields" : { "overhead" : 1 , "distance" : distance} } ]
+                try:
+                    result = influx.write_points(json_body)
+                    result = influx_local.write_points(json_body)
+                except:
+                    print("Error writing to influx for overhead planes %s \n" % ( the_time ))
+                    return
 old_time=0
 old_messages=0
 
@@ -307,11 +316,10 @@ def read_planes() :
                                                         pd = "%s %s %s %s %s %s track %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
                                                         if this_plane["miles"] < 2.0:
                                                                 token="\033[1;32;40m"
-#                                                                print("TWEET :")
                                                                 log.write("TWEET   : ")
+                                                                record_overhead(this_plane["miles"])
                                                                 try:
 									tweet(client,pd)
-#                                                                        response = client.api.statuses.update.post(status=pd)
                                                                 except Exception as e: print(e)
 
                                                         print("%s%s\033[0m" % (token,pd))
@@ -327,20 +335,13 @@ def read_planes() :
 				
                 except  :
                     pass
-#                Exception as e: print("> %s " % e)
-
-#as e: print(">",e,plane)
-
-#os.system('clear')
 
 tweet(client,"up and running %s\n" %(the_time))
 
 record_period=6
-
-
 interval=60*60*24.0
 #force database update on restart
-last_updated=time.time()  - 2*interval
+last_updated=time.time()  - (2*interval)
 
 import subprocess
 
@@ -379,7 +380,6 @@ while 1:
 	global api_requests
 	global record_period
 	time.sleep(5)
-#	print("-------- %d %d" % (api_requests,len(current_planes)))
 	now = time.time()
 	touched=0
 
