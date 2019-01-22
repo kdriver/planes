@@ -19,6 +19,31 @@ influx_local = InfluxDBClient("localhost",8086,'','',"planes")
 
 me=[-1.95917,50.83583]
 
+
+def check_delay(t,delta,msg):
+        n = time.time()
+        if ( (n - t) > delta ):
+            txt = msg + " actual time is %d \n" % (n-t) 
+            print(txt)
+            log.write(txt)
+
+def write_to_database(json_body):
+            t = time.time()
+            try:
+                influx.write_points(json_body)
+            except:
+                print("failed to write to mac db %s\n" % the_time)
+
+            check_delay(t,2," influx db  106 write took too long ")
+
+            t = time.time()
+            try:
+                influx_local.write_points(json_body)
+            except:
+                print("failed to write to rpi db %s \n" % the_time)
+            check_delay(t,2," influx db localhost write took too long ")
+
+
 def measure_temp():
             temp = os.popen("vcgencmd measure_temp").readline()
             t = temp.replace("temp=","")
@@ -30,11 +55,11 @@ def measure_temp():
                                                             "rpi_temp":  t
                                                   }
                                                 }]
-            influx.write_points(json_body)
-            influx_local.write_points(json_body)
+            write_to_database(json_body)
             return t
 
 def tweet(client,text):
+        t = time.time()
 	response=''
 	try:
 		response = client.api.statuses.update.post(status=text)
@@ -48,6 +73,7 @@ def tweet(client,text):
                     print(e)
                     print("failed to tweet a second time\n")
 
+        check_delay(t,2," tweeting  took too long ")
 	return response
 	
 try:
@@ -123,33 +149,41 @@ class Haversine:
         self.feet=self.miles*5280               # output distance in feet
         self.nm=self.miles/1.15               # output distance in feet
 
+def dprint(txt):
+        if 0 :
+            print(txt)
 
 def get_reg(flight):
 #	return ' '
+        t = time.time()
 	url=reg_url+flight
 	url=url.strip()
-	print("D: get reg %s " % url )
+	dprint("D: get reg %s " % url )
 	response=requests.post(url)
-	print("D: got  reg %s " % response.text )
+	dprint("D: got  reg %s " % response.text )
+        check_delay(t,2," get_reg took too long ")
 	return response.text
 	
 def get_plane(flight):
 #	return ' '
+        t = time.time()
 	url=plane_url+flight
 	url=url.strip()
-	print("D: get plane %s " % url )
+	dprint("D: get plane %s " % url )
 	response=requests.post(url)
-	print("D: got plane %s " % response.text )
+	dprint("D: got plane %s " % response.text )
+        check_delay(t,2," get_plane took too long ")
 	return response.text
 	
 def get_route(flight):
 	global conn
-	print("D: get route %s " % flight )
+        t = time.time()
+	dprint("D: get route %s " % flight )
 	answer = conn.execute("SELECT FromAirportName,ToAirportName  FROM RouteView WHERE Callsign = '%s'" % flight.strip() )
 	txt = answer.fetchone()
 	if txt  != None:
 		route = "%s -> %s" % txt
-		print("D: got route from sql %s " % route )
+		dprint("D: got route from sql %s " % route )
 		return route
 
 	return ' '
@@ -172,7 +206,8 @@ def get_route(flight):
 		route = rfrom + " -> " + rto
 	except Exception as e: print("oh no", e)
 
-	print("D: got route %s " % route )
+	dprint("D: got route %s " % route )
+        check_delay(t,2," get_route took too long ")
 	return route
 
 
@@ -185,21 +220,12 @@ def record_planes(num,per_sec):
 	record_period= record_period - 1 
 	if ( record_period <= 0 ):
 		record_period = 6
-                try:
-                    result = influx.write_points(json_body)
-                    result = influx_local.write_points(json_body)
-                except:
-                    print("Error writing to influx %s \n" % ( the_time ))
-                    return
+                write_to_database(json_body)
 
 def record_overhead(distance):
-                json_body = [ { "measurement" : "count",  "tags" : {"duck"}, "fields" : { "overhead" : 1 , "distance" : distance} } ]
-                try:
-                    result = influx.write_points(json_body)
-                    result = influx_local.write_points(json_body)
-                except:
-                    print("Error writing to influx for overhead planes %s \n" % ( the_time ))
-                    return
+                json_body = [ { "measurement" : "count",  "tags" : {}, "fields" : { "overhead" : 1 , "distance" : distance} } ]
+                write_to_database(json_body)
+                return
 old_time=0
 old_messages=0
 
@@ -336,7 +362,7 @@ def read_planes() :
                 except  :
                     pass
 
-tweet(client,"up and running %s\n" %(the_time))
+#tweet(client,"up and running %s\n" %(the_time))
 
 record_period=6
 interval=60*60*24.0
@@ -345,19 +371,30 @@ last_updated=time.time()  - (2*interval)
 
 import subprocess
 
+def call_command(command):
+    t = time.time()
+    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
+    print(txt)
+    log.write(txt)
+    check_delay(t,2," call_command took too long ")
+
 def update_routes():
         tnow = time.time()
         global last_updated
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
             global conn
-            print("refresh the route database %s"  % the_time )
+            txt = "refresh the route database %s\n"  % time.asctime( time.localtime(time.time()))
+            print(txt)
+            log.write(txt)
             try:
                 conn.close() 
-                print subprocess.check_output(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
-                print subprocess.check_output(["gunzip","-f","-k","./StandingData.sqb.gz"])
+                call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
                 print("reconnected to the route database %s"  % the_time )
+                log.write("reconnected to the route database %s\n"  % the_time )
+                log.flush()
             except:
                 print("Complete disaster - cant re open route database")
                 
@@ -368,20 +405,38 @@ def record_temp():
     tnow = time.time()
     global last_recorded_temp_time
     if ( (tnow - last_recorded_temp_time) > 60 ) :
-        print("record temp %f " % measure_temp())
+        print("record temp %f %s " % (measure_temp(),the_time))
         last_recorded_temp_time = tnow
+
+heartbeat = 0
+
+def tick_tock(c):
+    global heartbeat
+    diff = c - heartbeat
+    if ( diff > 300 ) :
+        if ( diff > 350 ):
+            d  = " Time PAUSED %d " % (diff)
+        else:
+            d = ""
+
+        txt = "Tick: %s %s\n" % (d,time.asctime( time.localtime(time.time())))
+        print(txt)
+        log.write(txt)
+        heartbeat = c
+
 
 
 
 while 1:
+	global api_requests
+	global record_period
         update_routes()
 	read_planes()
 	record_temp()
-	global api_requests
-	global record_period
 	time.sleep(5)
 	now = time.time()
 	touched=0
+        tick_tock(now)
 
 	four=0
 	delete_list = []
