@@ -27,14 +27,26 @@ def check_delay(t,delta,msg):
             print(txt)
             log.write(txt)
 
-def write_to_database(json_body):
-            t = time.time()
-            try:
-                influx.write_points(json_body)
-            except:
-                print("failed to write to mac db %s\n" % the_time)
+cpu_temp="40"
 
-            check_delay(t,2," influx db  106 write took too long ")
+def thingspeak(num,persec):
+    request= "https://api.thingspeak.com/update?api_key=KYTTEKY9482LPE5L&field1=%s&field2=%s&field3=%s" % (num,persec,cpu_temp)
+    try:
+        response = requests.post(request)
+    except:
+        print("error writing to thingspeak \n")
+
+
+
+def write_to_database(json_body):
+            if ( 0 ) :
+                t = time.time()
+                try:
+                    influx.write_points(json_body)
+                except:
+                    print("failed to write to mac db %s\n" % the_time)
+
+                check_delay(t,2," influx db  106 write took too long ")
 
             t = time.time()
             try:
@@ -48,6 +60,8 @@ def measure_temp():
             temp = os.popen("vcgencmd measure_temp").readline()
             t = temp.replace("temp=","")
             t = float(t.replace("'C",""))
+            global cpu_temp
+            cpu_temp = str(t)
             json_body = [
                         {
                                     "measurement": "count",
@@ -87,9 +101,12 @@ import signal
 
 def handler(signum,stack):
         dmp = open("dump.txt","w")
+        tnow = time.time()
+        dmp.write(" time  %s " % time.asctime( time.localtime( tnow  )))
         for plane_hex in current_planes:
             plane=current_planes[plane_hex]
             dmp.write("%s\n" % plane)
+        dmp.write("last time the temp was recorded is %s " % time.asctime( last_recorded_temp_time ))
         dmp.close()
         print("caught it")
 
@@ -214,6 +231,7 @@ def get_route(flight):
 current_planes =  dict()
 
 
+
 def record_planes(num,per_sec):
 	json_body = [ { "measurement" : "count",  "tags" : {}, "fields" : { "value" : num , "msgspersec" : per_sec} } ]
 	global record_period
@@ -221,6 +239,7 @@ def record_planes(num,per_sec):
 	if ( record_period <= 0 ):
 		record_period = 6
                 write_to_database(json_body)
+                thingspeak(str(num),str(per_sec)) 
 
 def record_overhead(distance):
                 json_body = [ { "measurement" : "count",  "tags" : {}, "fields" : { "overhead" : 1 , "distance" : distance} } ]
@@ -261,7 +280,6 @@ def read_planes() :
 	old_messages = messages_now
 	
 	record_planes(num_planes,msgs_per_sec)
-	touched =0
 	iter=0
 	for plane in planes:
 		iter = iter +1
@@ -356,7 +374,6 @@ def read_planes() :
                                 pass
 
 			this_plane["touched"] = time.time()
-			touched+=1
 			current_planes[hex] = this_plane
 				
                 except  :
@@ -424,9 +441,6 @@ def tick_tock(c):
         log.write(txt)
         heartbeat = c
 
-
-
-
 while 1:
 	global api_requests
 	global record_period
@@ -435,7 +449,6 @@ while 1:
 	record_temp()
 	time.sleep(5)
 	now = time.time()
-	touched=0
         tick_tock(now)
 
 	four=0
@@ -448,7 +461,6 @@ while 1:
 
 			if  td  > 60.0:
 				delete_list.append( plane_hex )
-			touched+=1
 		except :
 			pass
 
