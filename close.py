@@ -10,12 +10,14 @@ from influxdb import InfluxDBClient
 
 from birdy.twitter import UserClient
 import twittertokens
+import thingspeak
 
 client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
                     twittertokens.ACCESS_TOKEN,twittertokens.ACCESS_TOKEN_SECRET)
 
 influx= InfluxDBClient("192.168.0.106",8086,'','',"planes")
 influx_local = InfluxDBClient("localhost",8086,'','',"planes")
+thingspeak_key=thingspeak.WRITE_KEY
 
 me=[-1.95917,50.83583]
 
@@ -30,7 +32,7 @@ def check_delay(t,delta,msg):
 cpu_temp="40"
 
 def thingspeak(num,persec):
-    request= "https://api.thingspeak.com/update?api_key=KYTTEKY9482LPE5L&field1=%s&field2=%s&field3=%s" % (num,persec,cpu_temp)
+    request= "https://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s" % (thingspeak_key,num,persec,cpu_temp)
     t = time.time()
     try:
         response = requests.post(request)
@@ -360,7 +362,7 @@ def read_planes() :
                                                 except:
                                                         this_plane["done"]=1
 #                                                        Sat Feb 16 14:08:39 2019 BEE4350  4057f2 G-FBEJ Embraer ERJ 190-200 Lr   track=254.2  alt=17000 nearest_point=0.814259
-                                                        pd = "%s flt=%s hex=%s tail=%s %s %s track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+                                                        pd = "%s flt=%s  hex=%s  tail=%s  %s %s track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
                                                         if this_plane["miles"] < 2.0:
                                                                 token="\033[1;32;40m"
                                                                 log.write("TWEET   : ")
