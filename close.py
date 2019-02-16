@@ -31,10 +31,12 @@ cpu_temp="40"
 
 def thingspeak(num,persec):
     request= "https://api.thingspeak.com/update?api_key=KYTTEKY9482LPE5L&field1=%s&field2=%s&field3=%s" % (num,persec,cpu_temp)
+    t = time.time()
     try:
         response = requests.post(request)
     except:
         print("error writing to thingspeak \n")
+    check_delay(t,2," thingspeak  write took too long ")
 
 
 
@@ -357,7 +359,8 @@ def read_planes() :
                                                         pdone = this_plane["done"]
                                                 except:
                                                         this_plane["done"]=1
-                                                        pd = "%s %s %s %s %s %s track %s  alt=%s nearest point %8.2f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+#                                                        Sat Feb 16 14:08:39 2019 BEE4350  4057f2 G-FBEJ Embraer ERJ 190-200 Lr   track=254.2  alt=17000 nearest_point=0.814259
+                                                        pd = "%s flt=%s hex=%s tail=%s %s %s track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
                                                         if this_plane["miles"] < 2.0:
                                                                 token="\033[1;32;40m"
                                                                 log.write("TWEET   : ")
