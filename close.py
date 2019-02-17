@@ -5,6 +5,7 @@ import math
 import requests
 import os
 import sqlite3
+import sqldb
 
 from influxdb import InfluxDBClient
 
@@ -363,6 +364,12 @@ def read_planes() :
                                                         this_plane["done"]=1
 #                                                        Sat Feb 16 14:08:39 2019 BEE4350  4057f2 G-FBEJ Embraer ERJ 190-200 Lr   track=254.2  alt=17000 nearest_point=0.814259
                                                         pd = "%s flt=%s  hex=%s  tail=%s  %s %s track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+#cols = " ts, flight, hex , tail , alt ,  track , nearest_point , lat  , long   " 
+                                                        try:
+                                                            sqldb.insert_data((time.time(),this_plane["flight"],this_plane["hex"],this_plane["reg"],this_plane["altitude"],this_plane["track"],this_plane["miles"],this_plane["lat"],this_plane["lon"]))
+                                                        except Exception as e :
+                                                            print("problem inserting into sqldb %s " % e)
+
                                                         if this_plane["miles"] < 2.0:
                                                                 token="\033[1;32;40m"
                                                                 log.write("TWEET   : ")
@@ -445,6 +452,8 @@ def tick_tock(c):
         print(txt)
         log.write(txt)
         heartbeat = c
+
+sqldb.attach_sqldb()
 
 while 1:
 	global api_requests
