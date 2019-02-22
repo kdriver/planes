@@ -1,0 +1,15 @@
+[Unit]
+Description=Flightaware processing
+After=multi-user.target
+
+
+[Service]
+User=pi
+Group=pi
+Type=simple
+WorkingDirectory=/home/pi/planes
+ExecStart=/usr/bin/python /home/pi/planes/close.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
