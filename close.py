@@ -97,7 +97,14 @@ def tweet(client,text):
 	
 try:
         conn = sqlite3.connect('StandingData.sqb')
-        print("connected")
+        print("connected to StandingData")
+except Exception as e: 
+	print (e)
+	exit()
+
+try:
+        conn_base = sqlite3.connect('BaseStation.sqb')
+        print("connected to BaseStation")
 except Exception as e: 
 	print (e)
 	exit()
@@ -178,6 +185,16 @@ def dprint(txt):
 def get_reg(flight):
 #	return ' '
         t = time.time()
+        try:
+	    answer = conn_base.execute("SELECT Registration  FROM Aircraft WHERE ModeS = '%s'" % str(flight.strip().upper()) )
+            txt = answer.fetchone()
+            if txt != None:
+                return "%s" % txt
+        except Exception as e:
+            print("get_reg - database exception %s " % e )
+
+        print("not in Basestation data %s " % flight)
+
 	url=reg_url+flight
 	url=url.strip()
 	dprint("D: get reg %s " % url )
@@ -189,6 +206,16 @@ def get_reg(flight):
 def get_plane(flight):
 #	return ' '
         t = time.time()
+        try:
+            answer = conn_base.execute("SELECT Type  FROM Aircraft WHERE ModeS = '%s'" % str(flight.strip().upper()) )
+            txt = answer.fetchone()
+            if txt != None:
+                return "%s" % txt
+        except Exception as e:
+            print("get_plane - database exception %s " % e )
+
+        print("not in Basestation data %s " % flight)
+
 	url=plane_url+flight
 	url=url.strip()
 	dprint("D: get plane %s " % url )
@@ -413,6 +440,7 @@ def update_routes():
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
             global conn
+            global conn_base
             txt = "refresh the route database %s\n"  % time.asctime( time.localtime(time.time()))
             print(txt)
             log.write(txt)
@@ -426,6 +454,19 @@ def update_routes():
                 log.flush()
             except:
                 print("Complete disaster - cant re open route database")
+            txt = "refresh the BaseStation  database %s\n"  % time.asctime( time.localtime(time.time()))
+            print(txt)
+            log.write(txt)
+            try:
+                conn_base.close() 
+                call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
+                call_command(["unzip","-f","./BaseStation.sqb.zip"])
+                conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
+                print("reconnected to the Base station database %s"  % the_time )
+                log.write("reconnected to the Base station database %s\n"  % the_time )
+                log.flush()
+            except Exception as e:
+                print("Complete disaster - cant re open Base station database %s " % e)
                 
 #force temp measurement on startup
 last_recorded_temp_time = time.time() - 120
