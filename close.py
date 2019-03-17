@@ -6,6 +6,7 @@ import requests
 import os
 import sqlite3
 import sqldb
+import Adafruit_DHT
 
 from influxdb import InfluxDBClient
 
@@ -39,7 +40,7 @@ def thingspeak(num,persec):
         response = requests.post(request)
     except:
         print("error writing to thingspeak \n")
-    check_delay(t,2," thingspeak  write took too long ")
+    check_delay(t,4," thingspeak  write took too long ")
 
 
 
@@ -62,20 +63,31 @@ def write_to_database(json_body):
 
 
 def measure_temp():
+    #read the internal rpi temp sensor
             temp = os.popen("vcgencmd measure_temp").readline()
             t = temp.replace("temp=","")
             t = float(t.replace("'C",""))
             global cpu_temp
             cpu_temp = str(t)
+    #read the external dht22 one wire temp/sumidity sensor
+            humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 4)
+            if humidity == None:
+                    humidity = 50.0
+            if humidity > 100:
+                    humidity = 100
+            if temperature == None or temperature > 50:
+                temperature = 0
             json_body = [
                         {
                                     "measurement": "count",
                                             "fields": {
-                                                            "rpi_temp":  t
+                                                            "rpi_temp":  t,
+                                                            "dht22_temp": temperature,
+                                                            "dht22_humidity": humidity
                                                   }
                                                 }]
             write_to_database(json_body)
-            return t
+            return (t,temperature,humidity)
 
 def tweet(client,text):
         t = time.time()
@@ -350,7 +362,7 @@ def read_planes() :
 
                         try: 
                                 miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
-                                if miles < 25: 
+                                if miles < 50: 
                                         try:
                                                 route = this_plane["plane"]
                                         except:
@@ -433,9 +445,9 @@ def call_command(command):
     print(txt)
     log.write(txt)
     check_delay(t,2," call_command took too long ")
+    return txt
 
-def update_routes():
-        tnow = time.time()
+def update_routes(tnow):
         global last_updated
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
@@ -446,8 +458,11 @@ def update_routes():
             log.write(txt)
             try:
                 conn.close() 
-                call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
-                call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
+                ans = call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                if  'Omitting' in ans :
+                    print("No download - so no need to decompress \n")
+                else:
+                    call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
                 print("reconnected to the route database %s"  % the_time )
                 log.write("reconnected to the route database %s\n"  % the_time )
@@ -459,8 +474,11 @@ def update_routes():
             log.write(txt)
             try:
                 conn_base.close() 
-                call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
-                call_command(["unzip","-f","./BaseStation.sqb.zip"])
+                ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
+                if 'Omitting' in ans : 
+                    print("No download - so no need to decompress \n")
+                else:
+                    call_command(["unzip","-o","./BaseStation.sqb.zip"])
                 conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
                 print("reconnected to the Base station database %s"  % the_time )
                 log.write("reconnected to the Base station database %s\n"  % the_time )
@@ -471,11 +489,11 @@ def update_routes():
 #force temp measurement on startup
 last_recorded_temp_time = time.time() - 120
 
-def record_temp():
-    tnow = time.time()
+def record_temp(tnow):
     global last_recorded_temp_time
     if ( (tnow - last_recorded_temp_time) > 60 ) :
-        print("record temp %f %s " % (measure_temp(),the_time))
+        t,t1,h = measure_temp()
+        print("record temp %f dht22 temp %f dht22 humidity %f %s " % (t,t1,h,the_time))
         last_recorded_temp_time = tnow
 
 heartbeat = 0
@@ -495,16 +513,17 @@ def tick_tock(c):
         heartbeat = c
 
 sqldb.attach_sqldb()
+update_routes(time.time())
 
 while 1:
 	global api_requests
 	global record_period
-        update_routes()
-	read_planes()
-	record_temp()
 	time.sleep(5)
+	read_planes()
 	now = time.time()
+        update_routes(now)
         tick_tock(now)
+	record_temp(now)
 
 	four=0
 	delete_list = []
