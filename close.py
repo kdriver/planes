@@ -23,6 +23,8 @@ thingspeak_key=thingspeak.WRITE_KEY
 
 me=[-1.95917,50.83583]
 
+def ascii_time(t)
+    return time.asctime( time.localtime(time.time()))
 
 def check_delay(t,delta,msg):
         n = time.time()
@@ -50,7 +52,7 @@ def write_to_database(json_body):
                 try:
                     influx.write_points(json_body)
                 except:
-                    print("failed to write to mac db %s\n" % the_time)
+                    print("failed to write to mac db %s\n" % ascii_time(t))
 
                 check_delay(t,2," influx db  106 write took too long ")
 
@@ -58,7 +60,7 @@ def write_to_database(json_body):
             try:
                 influx_local.write_points(json_body)
             except:
-                print("failed to write to rpi db %s \n" % the_time)
+                print("failed to write to rpi db %s \n" % ascii_time(t))
             check_delay(t,2," influx db localhost write took too long ")
 
 
@@ -447,13 +449,14 @@ def call_command(command):
     check_delay(t,2," call_command took too long ")
     return txt
 
+
 def update_routes(tnow):
         global last_updated
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
             global conn
             global conn_base
-            txt = "refresh the route database %s\n"  % time.asctime( time.localtime(time.time()))
+            txt = "refresh the route database %s\n"  % ascii_time(time.time())
             print(txt)
             log.write(txt)
             try:
@@ -464,12 +467,12 @@ def update_routes(tnow):
                 else:
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
-                print("reconnected to the route database %s"  % the_time )
-                log.write("reconnected to the route database %s\n"  % the_time )
+                print("reconnected to the route database %s"  % ascii_time(time.time() ))
+                log.write("reconnected to the route database %s\n"  % ascii_time(time.time() ))
                 log.flush()
             except:
                 print("Complete disaster - cant re open route database")
-            txt = "refresh the BaseStation  database %s\n"  % time.asctime( time.localtime(time.time()))
+            txt = "refresh the BaseStation  database %s\n"  % ascii_time(time.time())
             print(txt)
             log.write(txt)
             try:
@@ -480,8 +483,8 @@ def update_routes(tnow):
                 else:
                     call_command(["unzip","-o","./BaseStation.sqb.zip"])
                 conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
-                print("reconnected to the Base station database %s"  % the_time )
-                log.write("reconnected to the Base station database %s\n"  % the_time )
+                print("reconnected to the Base station database %s"  % ascii_time(time.time() ))
+                log.write("reconnected to the Base station database %s\n"  % ascii_time(time.time() ))
                 log.flush()
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
