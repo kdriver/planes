@@ -14,6 +14,8 @@ from birdy.twitter import UserClient
 import twittertokens
 import thingspeak
 
+use_aeroplanes_api=False
+
 client = UserClient(twittertokens.CONSUMER_KEY,twittertokens.CONSUMER_SECRET,
                     twittertokens.ACCESS_TOKEN,twittertokens.ACCESS_TOKEN_SECRET)
 
@@ -207,14 +209,20 @@ def get_reg(flight):
         except Exception as e:
             print("get_reg - database exception %s " % e )
 
-        print("not in Basestation data %s " % flight)
+            
 
-	url=reg_url+flight
-	url=url.strip()
-	dprint("D: get reg %s " % url )
-	response=requests.post(url)
-	dprint("D: got  reg %s " % response.text )
+        answer="not used"
+        if  use_aeroplanes_api :
+            url=reg_url+flight
+            url=url.strip()
+            dprint("D: get reg %s " % url )
+            response=requests.post(url)
+            dprint("D: got  reg %s " % response.text )
+            answer= response.text
+
         check_delay(t,2," get_reg took too long ")
+        print("get_reg not in Basestation data %s API returned %s " % ( flight,answer ))
+
 	return response.text
 	
 def get_plane(flight):
@@ -228,14 +236,19 @@ def get_plane(flight):
         except Exception as e:
             print("get_plane - database exception %s " % e )
 
-        print("not in Basestation data %s " % flight)
 
-	url=plane_url+flight
-	url=url.strip()
-	dprint("D: get plane %s " % url )
-	response=requests.post(url)
-	dprint("D: got plane %s " % response.text )
+        answer="not used"
+        if  use_aeroplanes_api :
+            url=plane_url+flight
+            url=url.strip()
+            dprint("D: get plane %s " % url )
+            response=requests.post(url)
+            dprint("D: got plane %s " % response.text )
+            answer=response.text
+
         check_delay(t,2," get_plane took too long ")
+        print("get_plane not in Basestation data %s API returned %s " % ( flight,response.text ))
+
 	return response.text
 	
 def get_route(flight):
@@ -423,7 +436,7 @@ def read_planes() :
 
                                                         log.write("%s \n" % (pd) )
                                                         log.flush()
-                        except:
+                        except Exception as e:
                                 pass
 
 			this_plane["touched"] = time.time()
