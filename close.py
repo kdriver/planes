@@ -23,7 +23,7 @@ thingspeak_key=thingspeak.WRITE_KEY
 
 me=[-1.95917,50.83583]
 
-def ascii_time(t)
+def ascii_time(t):
     return time.asctime( time.localtime(time.time()))
 
 def check_delay(t,delta,msg):
