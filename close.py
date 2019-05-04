@@ -95,7 +95,7 @@ def measure_temp():
 
 def tweet(client,text):
         t = time.time()
-	response=''
+        response=''
 	try:
 		response = client.api.statuses.update.post(status=text)
 	except Exception as e:
@@ -119,7 +119,7 @@ except Exception as e:
 	exit()
 
 try:
-        conn_base = sqlite3.connect('BaseStation.sqb')
+        conn_base = sqlite3.connect('basestation/BaseStation.sqb')
         print("connected to BaseStation")
 except Exception as e: 
 	print (e)
