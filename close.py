@@ -225,16 +225,17 @@ def get_reg(flight):
 
 	return response.text
 	
-def get_plane(flight):
-#	return ' '
-        t = time.time()
+def get_plane(hex_id):
         try:
-            answer = conn_base.execute("SELECT Type  FROM Aircraft WHERE ModeS = '%s'" % str(flight.strip().upper()) )
+            answer = conn_base.execute("SELECT Type  FROM Aircraft WHERE ModeS = '%s'" % str(hex_id.strip().upper()) )
             txt = answer.fetchone()
             if txt != None:
-                return "%s" % txt
+                x =  "%s" % txt
+                y = x.split('/')
+                answer  = y[0] 
+                return answer 
         except Exception as e:
-            print("get_plane - database exception %s " % e )
+            print("get_plane - flight %s database exception %s " % (hex_id,e) )
 
 
         answer="not used"
@@ -417,7 +418,7 @@ def read_planes() :
                                                 except:
                                                         this_plane["done"]=1
 #                                                        Sat Feb 16 14:08:39 2019 BEE4350  4057f2 G-FBEJ Embraer ERJ 190-200 Lr   track=254.2  alt=17000 nearest_point=0.814259
-                                                        pd = "%s flt=%s  hex=%s  tail=%s  %s %s track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+                                                        pd = "%s flt=%s  hex=%s  tail=%s  type='%s'  route='%s' track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
 #cols = " ts, flight, hex , tail , alt ,  track , nearest_point , lat  , long   " 
                                                         try:
                                                             sqldb.insert_data((time.time(),this_plane["flight"],this_plane["hex"],this_plane["reg"],this_plane["altitude"],this_plane["track"],this_plane["miles"],this_plane["lat"],this_plane["lon"]))
