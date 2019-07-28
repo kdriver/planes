@@ -36,6 +36,7 @@ def check_delay(t,delta,msg):
             log.write(txt)
 
 cpu_temp="40"
+humidity, last_temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 4)
 
 def thingspeak(num,persec):
     request= "https://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s" % (thingspeak_key,num,persec,cpu_temp)
@@ -61,8 +62,8 @@ def write_to_database(json_body):
             t = time.time()
             try:
                 influx_local.write_points(json_body)
-            except:
-                print("failed to write to rpi db %s \n" % ascii_time(t))
+            except Exception as e:
+                print("failed to write to rpi db %s %s\n" % (ascii_time(t),e))
             check_delay(t,2," influx db localhost write took too long ")
 
 
@@ -80,13 +81,21 @@ def measure_temp():
             if humidity > 100:
                     humidity = 100
             if temperature == None or temperature > 50:
-                temperature = 0
+                temperature = 0.0
+            # The dh22 sensor seems to return readings that are a bit low everynow and again so ignore them and use the last 'good' value
+            global last_temperature
+            if abs(last_temperature-last_temperature) > 1.0:
+                print("fixed temp sensor, new reading %f, last reading %f\n" % ( temperature, last_temperature))
+                temperature = last_temperature
+            else:
+                last_temperature = temperature
+
             json_body = [
                         {
                                     "measurement": "count",
                                             "fields": {
                                                             "rpi_temp":  t,
-                                                            "dht22_temp": temperature,
+                                                            "dht22_temp_a": temperature,
                                                             "dht22_humidity": humidity
                                                   }
                                                 }]
@@ -206,6 +215,8 @@ def get_reg(flight):
             txt = answer.fetchone()
             if txt != None:
                 return "%s" % txt
+            else:
+                return "unknown"
         except Exception as e:
             print("get_reg - database exception %s " % e )
 
@@ -226,6 +237,22 @@ def get_reg(flight):
 	return response.text
 	
 def get_plane(hex_id):
+        try:
+            ms = hex_id.strip().upper()
+            command=  "SELECT Manufacturer,Type  FROM Aircraft WHERE ModeS='{0}'".format(ms)
+            #print("the_command {0} \n".format(command) )
+            answer = conn_base.execute(command )
+            txt = answer.fetchone()
+            if txt != None:
+                x =  "{0}:{1}".format(txt[0],txt[1])
+                y = x.split('/')
+                answer  = y[0] 
+                return answer 
+        except Exception as e:
+            print("get_plane - flight {0} database exception {1} ".format(hex_id,e) )
+            return "unknown" 
+
+def old_get_plane(hex_id):
         try:
             answer = conn_base.execute("SELECT Type  FROM Aircraft WHERE ModeS = '%s'" % str(hex_id.strip().upper()) )
             txt = answer.fetchone()
