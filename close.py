@@ -84,8 +84,10 @@ def measure_temp():
                 temperature = 0.0
             # The dh22 sensor seems to return readings that are a bit low everynow and again so ignore them and use the last 'good' value
             global last_temperature
-            if abs(last_temperature-last_temperature) > 1.0:
-                print("fixed temp sensor, new reading %f, last reading %f\n" % ( temperature, last_temperature))
+            if abs(last_temperature-temperature) > 1.0:
+                txt = "fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature)
+                print(txt)
+                log.write(txt)
                 temperature = last_temperature
             else:
                 last_temperature = temperature
@@ -207,6 +209,19 @@ def dprint(txt):
         if 0 :
             print(txt)
 
+def is_in_db(flight):
+            try:
+                ms = flight.strip().upper()
+                command=  "SELECT ModeS  FROM Aircraft WHERE ModeS='{0}'".format(ms)
+                answer = conn_base.execute(command)
+                txt = answer.fetchone()
+                if txt != None:
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                print("Excception probing db for hex {0} : {1}".format(flight,e))
+        
 def get_reg(flight):
 #	return ' '
         t = time.time()
@@ -406,18 +421,32 @@ def read_planes() :
                         try: 
                                 miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
                                 if miles < 50: 
+                                        indb= False
                                         try:
-                                                route = this_plane["plane"]
+                                            indb= this_plane["indb"]
                                         except:
-                                                response = get_plane(this_plane["hex"])
-                                                if response != '':
-                                                        this_plane["plane"]=response
-                                        try:
-                                                reg = this_plane["reg"]
-                                        except:
-                                                response = get_reg(this_plane["hex"])
-                                                if response != '':
-                                                        this_plane["reg"]=response
+                                            if is_in_db(this_plane["hex"]) :
+                                                indb=True
+                                                this_plane["indb"] = indb
+                                            else:
+                                                msg = "flight {0} not in Basestation.sqb database, supress further lookups\n".format(this_plane["hex"])
+                                                print(msg)
+                                                log.write(msg)
+                                                this_plane["indb"] = False
+
+                                        if  indb:
+                                            try:
+                                                    route = this_plane["plane"]
+                                            except:
+                                                    response = get_plane(this_plane["hex"])
+                                                    if response != '':
+                                                            this_plane["plane"]=response
+                                            try:
+                                                    reg = this_plane["reg"]
+                                            except:
+                                                    response = get_reg(this_plane["hex"])
+                                                    if response != '':
+                                                            this_plane["reg"]=response
 
                                         try:
                                                  route = this_plane["route"]
