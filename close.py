@@ -7,6 +7,7 @@ import os
 import sqlite3
 import sqldb
 import Adafruit_DHT
+import adsbex_query
 
 from influxdb import InfluxDBClient
 
@@ -85,7 +86,7 @@ def measure_temp():
             # The dh22 sensor seems to return readings that are a bit low everynow and again so ignore them and use the last 'good' value
             global last_temperature
             if abs(last_temperature-temperature) > 1.0:
-                txt = "fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature)
+                txt = "{2} fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature,ascii_time(time.time()))
                 print(txt)
                 log.write(txt)
                 temperature = last_temperature
@@ -163,6 +164,8 @@ the_time = time.asctime( time.localtime(time.time()))
 log = open("monitor.txt","a")
 log.write("New session %s \n" % (the_time))
 log.flush()
+
+adsb_data = open('adsb_data.json',"a")
 
 def degrees_to_cardinal(x):
     '''
@@ -427,12 +430,26 @@ def read_planes() :
                                         except:
                                             if is_in_db(this_plane["hex"]) :
                                                 indb=True
-                                                this_plane["indb"] = indb
+                                                this_plane["indb"] = True
                                             else:
-                                                msg = "flight {0} not in Basestation.sqb database, supress further lookups\n".format(this_plane["hex"])
+                                                this_plane["indb"] = False
+                                                msg = "flight {0} not in Basestation.sqb database, suppress further lookups\n".format(this_plane["hex"])
                                                 print(msg)
                                                 log.write(msg)
-                                                this_plane["indb"] = False
+                                                adsb = adsbex_query.adsb_lookup(this_plane["hex"])
+                                                if adsb != None:
+                                                    msg = "but found reg in ADSB Ex API for {0} {1}\n".format(this_plane["hex"],adsb['tail'])
+                                                    print(msg)
+                                                    log.write(msg)
+                                                    adsb_data.write(json.dumps(adsb))
+                                                    adsb_data.write("\n")
+                                                    adsb_data.flush()
+                                                    this_plane["reg"] = adsb['tail']
+                                                    try:
+                                                        f = adsb['from']
+                                                        this_plane["route"] = "{0}->{1}".format(adsb['from'],adsb['to'])
+                                                    except:
+                                                        pass
 
                                         if  indb:
                                             try:
