@@ -621,7 +621,6 @@ def tick_tock(c):
         heartbeat = c
 
 sqldb.attach_sqldb()
-update_routes(time.time())
 
 while 1:
 	global api_requests
