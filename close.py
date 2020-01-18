@@ -26,8 +26,14 @@ thingspeak_key=thingspeak.WRITE_KEY
 
 me=[-1.95917,50.83583]
 
-def ascii_time(t):
-    return time.asctime( time.localtime(time.time()))
+record_period=6
+interval=60*60*24.0
+#force database update on restart
+last_updated=time.time()  - (2*interval)
+
+log = open("monitor.txt","a")
+
+import subprocess
 
 def check_delay(t,delta,msg):
         n = time.time()
@@ -35,6 +41,65 @@ def check_delay(t,delta,msg):
             txt = msg + " actual time is %d \n" % (n-t) 
             print(txt)
             log.write(txt)
+
+def ascii_time(t):
+    return time.asctime( time.localtime(time.time()))
+
+def call_command(command):
+    t = time.time()
+    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
+    print(txt)
+    log.write(txt)
+    check_delay(t,2," call_command took too long ")
+    return txt
+
+
+def update_routes(tnow):
+        global last_updated
+        if ( tnow - last_updated ) > interval:
+            last_updated = tnow  
+            global conn
+            global conn_base
+            txt = "refresh the route database %s\n"  % ascii_time(time.time())
+            print(txt)
+            log.write(txt)
+            try:
+                #conn.close() 
+                ans = call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                if  'Omitting' in ans :
+                    print("No download - so no need to decompress \n")
+                else:
+                    call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
+                conn = sqlite3.connect('StandingData.sqb')
+                print("reconnected to the route database %s"  % ascii_time(time.time() ))
+                log.write("reconnected to the route database %s\n"  % ascii_time(time.time() ))
+                log.flush()
+            except:
+                print("Complete disaster - cant re open route database")
+            txt = "refresh the BaseStation  database %s\n"  % ascii_time(time.time())
+            print(txt)
+            log.write(txt)
+            try:
+                #conn_base.close() 
+                print("call script 'try' to refresh database")
+                ans = call_command(["./update_BaseStation.sh"])
+                print("script returned")
+                print(ans)
+                #ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
+                #if 'Omitting' in ans : 
+                #    print("No download - so no need to decompress \n")
+                #else:
+                #    call_command(["unzip","-o","./BaseStation.sqb.zip"])
+                conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
+                print("reconnected to the Base station database %s"  % ascii_time(time.time() ))
+                log.write("reconnected to the Base station database   %s\n"  % ascii_time(time.time() ))
+                log.flush()
+            except Exception as e:
+                print("Complete disaster - cant re open Base station database %s " % e)
+                exit()
+update_routes(time.time())
+
+
 
 cpu_temp="40"
 humidity, last_temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 4)
@@ -162,7 +227,6 @@ reg_url='https://ae.roplan.es/api/hex-reg.php?hex='
 api_requests=0
 
 the_time = time.asctime( time.localtime(time.time()))
-log = open("monitor.txt","a")
 log.write("New session %s \n" % (the_time))
 log.flush()
 
@@ -530,68 +594,6 @@ def read_planes() :
                 except  :
                     pass
 
-#tweet(client,"up and running %s\n" %(the_time))
-
-record_period=6
-interval=60*60*24.0
-#force database update on restart
-last_updated=time.time()  - (2*interval)
-
-import subprocess
-
-def call_command(command):
-    t = time.time()
-    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
-    print(txt)
-    log.write(txt)
-    check_delay(t,2," call_command took too long ")
-    return txt
-
-
-def update_routes(tnow):
-        global last_updated
-        if ( tnow - last_updated ) > interval:
-            last_updated = tnow  
-            global conn
-            global conn_base
-            txt = "refresh the route database %s\n"  % ascii_time(time.time())
-            print(txt)
-            log.write(txt)
-            try:
-                conn.close() 
-                ans = call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
-                if  'Omitting' in ans :
-                    print("No download - so no need to decompress \n")
-                else:
-                    call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
-                conn = sqlite3.connect('StandingData.sqb')
-                print("reconnected to the route database %s"  % ascii_time(time.time() ))
-                log.write("reconnected to the route database %s\n"  % ascii_time(time.time() ))
-                log.flush()
-            except:
-                print("Complete disaster - cant re open route database")
-            txt = "refresh the BaseStation  database %s\n"  % ascii_time(time.time())
-            print(txt)
-            log.write(txt)
-            try:
-                conn_base.close() 
-                print("call script 'try' to refresh database")
-                ans = call_command(["./update_BaseStation.sh"])
-                print("script returned")
-                print(ans)
-                #ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
-                #if 'Omitting' in ans : 
-                #    print("No download - so no need to decompress \n")
-                #else:
-                #    call_command(["unzip","-o","./BaseStation.sqb.zip"])
-                conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
-                print("reconnected to the Base station database %s"  % ascii_time(time.time() ))
-                log.write("reconnected to the Base station database   %s\n"  % ascii_time(time.time() ))
-                log.flush()
-            except Exception as e:
-                print("Complete disaster - cant re open Base station database %s " % e)
-                exit()
-                
 #force temp measurement on startup
 last_recorded_temp_time = time.time() - 120
 
