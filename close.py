@@ -38,6 +38,7 @@ def check_delay(t,delta,msg):
 
 cpu_temp="40"
 humidity, last_temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 4)
+print(humidity,last_temperature)
 
 def thingspeak(num,persec):
     request= "https://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s" % (thingspeak_key,num,persec,cpu_temp)
@@ -82,7 +83,7 @@ def measure_temp():
             if humidity > 100:
                     humidity = 100
             if temperature == None or temperature > 50:
-                temperature = 0.0
+                temperature = 100.0
             # The dh22 sensor seems to return readings that are a bit low everynow and again so ignore them and use the last 'good' value
             global last_temperature
             if abs(last_temperature-temperature) > 1.0:
@@ -212,19 +213,24 @@ def dprint(txt):
         if 0 :
             print(txt)
 
+
 def is_in_db(flight):
             try:
                 ms = flight.strip().upper()
-                command=  "SELECT ModeS  FROM Aircraft WHERE ModeS='{0}'".format(ms)
+                command=  "SELECT Registration  FROM Aircraft WHERE ModeS='{0}'".format(ms)
                 answer = conn_base.execute(command)
                 txt = answer.fetchone()
-                if txt != None:
-                    return True
+                if txt != None:   # If there is an entry
+                    if txt[0] != None:  # if there a tail registration field
+                        return True
+                    else:
+                        return False
                 else:
                     return False
             except Exception as e:
-                print("Excception probing db for hex {0} : {1}".format(flight,e))
-        
+                print("Exception probing db for hex {0} : {1}".format(flight,e))
+
+
 def get_reg(flight):
 #	return ' '
         t = time.time()
@@ -255,6 +261,7 @@ def get_reg(flight):
 	return response.text
 	
 def get_plane(hex_id):
+        print("get the plane type for {}".format(hex_id))
         try:
             ms = hex_id.strip().upper()
             command=  "SELECT Manufacturer,Type  FROM Aircraft WHERE ModeS='{0}'".format(ms)
@@ -445,11 +452,15 @@ def read_planes() :
                                                     adsb_data.write("\n")
                                                     adsb_data.flush()
                                                     this_plane["reg"] = adsb['tail']
+                                                    this_plane["indb"] = True
+                                                    indb = True
                                                     try:
                                                         f = adsb['from']
                                                         this_plane["route"] = "{0}->{1}".format(adsb['from'],adsb['to'])
                                                     except:
                                                         pass
+                                                else:
+                                                    print("flight {0} not found in ADSBEx api either".format(this_plane["hex"]))
 
                                         if  indb:
                                             try:
@@ -564,17 +575,22 @@ def update_routes(tnow):
             log.write(txt)
             try:
                 conn_base.close() 
-                ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
-                if 'Omitting' in ans : 
-                    print("No download - so no need to decompress \n")
-                else:
-                    call_command(["unzip","-o","./BaseStation.sqb.zip"])
+                print("call script 'try' to refresh database")
+                ans = call_command(["./update_BaseStation.sh"])
+                print("script returned")
+                print(ans)
+                #ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
+                #if 'Omitting' in ans : 
+                #    print("No download - so no need to decompress \n")
+                #else:
+                #    call_command(["unzip","-o","./BaseStation.sqb.zip"])
                 conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
                 print("reconnected to the Base station database %s"  % ascii_time(time.time() ))
-                log.write("reconnected to the Base station database %s\n"  % ascii_time(time.time() ))
+                log.write("reconnected to the Base station database   %s\n"  % ascii_time(time.time() ))
                 log.flush()
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
+                exit()
                 
 #force temp measurement on startup
 last_recorded_temp_time = time.time() - 120
