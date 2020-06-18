@@ -151,6 +151,9 @@ def measure_temp():
                 temperature = 100.0
             # The dh22 sensor seems to return readings that are a bit low everynow and again so ignore them and use the last 'good' value
             global last_temperature
+            if last_temperature == None:
+                last_temperature = 30.0
+
             if abs(last_temperature-temperature) > 1.0:
                 txt = "{2} fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature,ascii_time(time.time()))
                 print(txt)
