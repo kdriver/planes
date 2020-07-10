@@ -8,6 +8,7 @@ import sqlite3
 import sqldb
 import Adafruit_DHT
 import adsbex_query
+import csv
 
 from influxdb import InfluxDBClient
 
@@ -32,6 +33,7 @@ interval=60*60*24.0
 last_updated=time.time()  - (2*interval)
 
 log = open("monitor.txt","a")
+modes_map={}
 
 import subprocess
 
@@ -42,7 +44,7 @@ def check_delay(t,delta,msg):
             print(txt)
             log.write(txt)
 
-def ascii_time(t):
+def ascii_time():
     return time.asctime( time.localtime(time.time()))
 
 def call_command(command):
@@ -56,11 +58,12 @@ def call_command(command):
 
 def update_routes(tnow):
         global last_updated
+        global modes_map
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
             global conn
             global conn_base
-            txt = "refresh the route database %s\n"  % ascii_time(time.time())
+            txt = "refresh the route database %s\n"  % ascii_time()
             print(txt)
             log.write(txt)
             try:
@@ -71,12 +74,12 @@ def update_routes(tnow):
                 else:
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
-                print("reconnected to the route database %s"  % ascii_time(time.time() ))
-                log.write("reconnected to the route database %s\n"  % ascii_time(time.time() ))
+                print("reconnected to the route database %s"  % ascii_time() )
+                log.write("reconnected to the route database %s\n"  % ascii_time())
                 log.flush()
             except:
                 print("Complete disaster - cant re open route database")
-            txt = "refresh the BaseStation  database %s\n"  % ascii_time(time.time())
+            txt = "refresh the BaseStation  database %s\n"  % ascii_time()
             print(txt)
             log.write(txt)
             try:
@@ -85,18 +88,27 @@ def update_routes(tnow):
                 ans = call_command(["./update_BaseStation.sh"])
                 print("script returned")
                 print(ans)
-                #ans = call_command(["wget","-N","https://data.flightairmap.com/data/basestation/BaseStation.sqb.zip"])
-                #if 'Omitting' in ans : 
-                #    print("No download - so no need to decompress \n")
-                #else:
-                #    call_command(["unzip","-o","./BaseStation.sqb.zip"])
                 conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
-                print("reconnected to the Base station database %s"  % ascii_time(time.time() ))
-                log.write("reconnected to the Base station database   %s\n"  % ascii_time(time.time() ))
+                print("reconnected to the Base station database %s"  % ascii_time())
+                log.write("reconnected to the Base station database   %s\n"  % ascii_time( ))
+                log.flush()
+                log.write("open the modeS file   %s\n"  % ascii_time( ))
+                log.flush()
+                modes_file = open("./modes.tsv")
+                log.write("file modes.tsv opened   %s\n"  % ascii_time( ))
+                log.flush()
+                read_tsv = csv.reader(modes_file,delimiter='	')
+                modes_map={}
+                log.write("read in the modeS file   %s\n"  % ascii_time( ))
+                log.flush()
+                for row in read_tsv:
+                    modes_map[row[2]] = row[4]
+                log.write("completed read of the modeS file, %d entries    %s\n"  % (len(modes_map),ascii_time()))
                 log.flush()
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
                 exit()
+
 update_routes(time.time())
 
 
@@ -122,7 +134,7 @@ def write_to_database(json_body):
                 try:
                     influx.write_points(json_body)
                 except:
-                    print("failed to write to mac db %s\n" % ascii_time(t))
+                    print("failed to write to mac db %s\n" % ascii_time())
 
                 check_delay(t,2," influx db  106 write took too long ")
 
@@ -130,7 +142,7 @@ def write_to_database(json_body):
             try:
                 influx_local.write_points(json_body)
             except Exception as e:
-                print("failed to write to rpi db %s %s\n" % (ascii_time(t),e))
+                print("failed to write to rpi db %s %s\n" % (ascii_time(),e))
             check_delay(t,2," influx db localhost write took too long ")
 
 
@@ -155,7 +167,7 @@ def measure_temp():
                 last_temperature = 30.0
 
             if abs(last_temperature-temperature) > 1.0:
-                txt = "{2} fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature,ascii_time(time.time()))
+                txt = "{2} fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature,ascii_time())
                 print(txt)
                 log.write(txt)
                 temperature = last_temperature
@@ -177,18 +189,17 @@ def measure_temp():
 def tweet(client,text):
         t = time.time()
         response=''
-	try:
-		response = client.api.statuses.update.post(status=text)
-	except Exception as e:
-		print(e)
+        try:
+            response = client.api.statuses.update.post(status=text)
+        except Exception as e:
+                print(e)
                 print("failed to tweet : retry\n")
                 try:
-		    response = client.api.statuses.update.post(status=text)
+                    response = client.api.statuses.update.post(status=text)
                     print("tweet retry ok\n")
                 except Exception as e:
                     print(e)
                     print("failed to tweet a second time\n")
-
         check_delay(t,2," tweeting  took too long ")
 	return response
 	
@@ -196,15 +207,15 @@ try:
         conn = sqlite3.connect('StandingData.sqb')
         print("connected to StandingData")
 except Exception as e: 
-	print (e)
-	exit()
+        print (e)
+        exit()
 
 try:
         conn_base = sqlite3.connect('basestation/BaseStation.sqb')
         print("connected to BaseStation")
 except Exception as e: 
-	print (e)
-	exit()
+        print (e)
+        exit()
 
 import signal
 
@@ -234,6 +245,7 @@ log.write("New session %s \n" % (the_time))
 log.flush()
 
 adsb_data = open('adsb_data.json',"a")
+unresolved_modes = open('unresolved_modes.json',"a")
 
 def degrees_to_cardinal(x):
     '''
@@ -339,7 +351,10 @@ def get_plane(hex_id):
                 x =  "{0}:{1}".format(txt[0],txt[1])
                 y = x.split('/')
                 answer  = y[0] 
+                print("plane type for {} is {}".format(hex_id,answer))
                 return answer 
+            else:
+                print("no plane type for {}".format(hex_id))
         except Exception as e:
             print("get_plane - flight {0} database exception {1} ".format(hex_id,e) )
             return "unknown" 
@@ -507,27 +522,41 @@ def read_planes() :
                                                 this_plane["indb"] = True
                                             else:
                                                 this_plane["indb"] = False
-                                                msg = "flight {0} not in Basestation.sqb database, suppress further lookups\n".format(this_plane["hex"])
-                                                print(msg)
+                                                msg = "airframe {0} not in Basestation.sqb database \n".format(this_plane["hex"])
+                                                print(msg.strip())
                                                 log.write(msg)
-                                                adsb = adsbex_query.adsb_lookup(this_plane["hex"])
-                                                if adsb != None:
-                                                    msg = "but found reg in ADSB Ex API for {0} {1}\n".format(this_plane["hex"],adsb['tail'])
-                                                    print(msg)
-                                                    log.write(msg)
-                                                    adsb_data.write(json.dumps(adsb))
-                                                    adsb_data.write("\n")
-                                                    adsb_data.flush()
-                                                    this_plane["reg"] = adsb['tail']
+                                                hexs = this_plane["hex"].strip().upper()
+                                                if hexs in modes_map:
+                                                    tail = modes_map[hexs]
+                                                    this_plane["reg"] = tail
+                                                    msg = "but found reg in downloaded adsb modes.tsv file {0} {1}".format(hexs,tail)
+                                                    print(msg.strip())
+                                                    indb=True
                                                     this_plane["indb"] = True
-                                                    indb = True
-                                                    try:
-                                                        f = adsb['from']
-                                                        this_plane["route"] = "{0}->{1}".format(adsb['from'],adsb['to'])
-                                                    except:
-                                                        pass
                                                 else:
-                                                    print("flight {0} not found in ADSBEx api either".format(this_plane["hex"]))
+                                                    log.write("{} not in modes.tsv either\n".format(hexs))
+                                                    print("{} not in modes.tsv either".format(hexs))
+                                                    adsb = adsbex_query.adsb_lookup(this_plane["hex"])
+                                                    if adsb != None:
+                                                        msg = "but found reg in ADSB Ex API for {0} {1}\n".format(this_plane["hex"],adsb['tail'])
+                                                        print(msg.strip())
+                                                        log.write(msg)
+                                                        adsb_data.write(json.dumps(adsb))
+                                                        adsb_data.write("\n")
+                                                        adsb_data.flush()
+                                                        this_plane["reg"] = adsb['tail']
+                                                        this_plane["indb"] = True
+                                                        indb = True
+                                                        try:
+                                                            f = adsb['from']
+                                                            this_plane["route"] = "{0}->{1}".format(adsb['from'],adsb['to'])
+                                                        except:
+                                                            pass
+                                                    else:
+                                                        print("flight {0} not found in ADSBEx api either - give up".format(this_plane["hex"]))
+                                                        unresolved_modes.write(hex)
+                                                        unresolved_modes.write("\n")
+                                                        unresolved_modes.flush()
 
                                         if  indb:
                                             try:
@@ -604,10 +633,10 @@ def record_temp(tnow):
     global last_recorded_temp_time
     if ( (tnow - last_recorded_temp_time) > 60 ) :
         t,t1,h = measure_temp()
-        print("record temp %f dht22 temp %f dht22 humidity %f %s " % (t,t1,h,the_time))
+        print("record temp %f dht22 temp %f dht22 humidity %f %s " % (t,t1,h,ascii_time()))
         last_recorded_temp_time = tnow
 
-heartbeat = 0
+heartbeat = time.time()
 
 def tick_tock(c):
     global heartbeat
@@ -618,7 +647,7 @@ def tick_tock(c):
         else:
             d = ""
 
-        txt = "Tick: %s %s\n" % (d,time.asctime( time.localtime(time.time())))
+        txt = "Tick: %s %s\n" % (d,ascii_time())
         print(txt)
         log.write(txt)
         heartbeat = c
