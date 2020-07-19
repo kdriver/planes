@@ -30,7 +30,9 @@ me=[-1.95917,50.83583]
 record_period=6
 interval=60*60*24.0
 #force database update on restart
-last_updated=time.time()  - (2*interval)
+#last_updated=time.time()  - (2*interval)
+last_updated=time.time() 
+sequence = 0
 
 log = open("monitor.txt","a")
 modes_map={}
@@ -75,7 +77,7 @@ def update_routes(tnow):
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('StandingData.sqb')
                 print("reconnected to the route database %s"  % ascii_time() )
-                log.write("reconnected to the route database %s\n"  % ascii_time())
+                log.write("reconnected t:wqo the route database %s\n"  % ascii_time())
                 log.flush()
             except:
                 print("Complete disaster - cant re open route database")
@@ -84,10 +86,9 @@ def update_routes(tnow):
             log.write(txt)
             try:
                 #conn_base.close() 
-                print("call script 'try' to refresh database")
+                print("call script and try to refresh database")
                 ans = call_command(["./update_BaseStation.sh"])
                 print("script returned")
-                print(ans)
                 conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
                 print("reconnected to the Base station database %s"  % ascii_time())
                 log.write("reconnected to the Base station database   %s\n"  % ascii_time( ))
@@ -108,6 +109,7 @@ def update_routes(tnow):
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
                 exit()
+            print("updates completed\n")
 
 update_routes(time.time())
 
@@ -167,20 +169,21 @@ def measure_temp():
                 last_temperature = 30.0
 
             if abs(last_temperature-temperature) > 1.0:
-                txt = "{2} fixed temp sensor, new reading {0}, last reading {1}\n".format( temperature, last_temperature,ascii_time())
+                txt = "{2} fixed temp sensor, new reading {0}, last reading {1}".format( temperature, last_temperature,ascii_time())
                 print(txt)
                 log.write(txt)
+                log.write("\n")
                 temperature = last_temperature
             else:
                 last_temperature = temperature
 
             json_body = [
                         {
-                                    "measurement": "count",
+                                        "measurement": "count",
                                             "fields": {
                                                             "rpi_temp":  t,
-                                                            "dht22_temp_a": temperature,
-                                                            "dht22_humidity": humidity
+                                                                "dht22_temp_a": temperature,
+                                                                "dht22_humidity": humidity
                                                   }
                                                 }]
             write_to_database(json_body)
@@ -319,7 +322,7 @@ def get_reg(flight):
             if txt != None:
                 return "%s" % txt
             else:
-                return "unknown"
+                return "UNKNOWN"
         except Exception as e:
             print("get_reg - database exception %s " % e )
 
@@ -340,7 +343,6 @@ def get_reg(flight):
 	return response.text
 	
 def get_plane(hex_id):
-        print("get the plane type for {}".format(hex_id))
         try:
             ms = hex_id.strip().upper()
             command=  "SELECT Manufacturer,Type  FROM Aircraft WHERE ModeS='{0}'".format(ms)
@@ -351,13 +353,13 @@ def get_plane(hex_id):
                 x =  "{0}:{1}".format(txt[0],txt[1])
                 y = x.split('/')
                 answer  = y[0] 
-                print("plane type for {} is {}".format(hex_id,answer))
+                #print("plane type for {} is {}".format(hex_id,answer))
                 return answer 
             else:
                 print("no plane type for {}".format(hex_id))
         except Exception as e:
             print("get_plane - flight {0} database exception {1} ".format(hex_id,e) )
-            return "unknown" 
+            return "UNKNOWN" 
 
 def old_get_plane(hex_id):
         try:
@@ -395,7 +397,7 @@ def get_route(flight):
 	if txt  != None:
 		route = "%s -> %s" % txt
 		dprint("D: got route from sql %s " % route )
-		return route
+		return route.encode('utf-8')
 
 	return ' '
 
@@ -430,7 +432,7 @@ def record_planes(num,per_sec):
 	json_body = [ { "measurement" : "count",  "tags" : {}, "fields" : { "value" : num , "msgspersec" : per_sec} } ]
 	global record_period
 	record_period= record_period - 1 
-	if ( record_period <= 0 ):
+        if ( record_period <= 0 ):
 		record_period = 6
                 write_to_database(json_body)
                 thingspeak(str(num),str(per_sec)) 
@@ -468,7 +470,7 @@ def read_planes() :
 	messages_diff = messages_now - old_messages
 	msgs_per_sec = messages_diff / time_diff
 
-	print(" planes in list %d msgs per sec %f" % (num_planes,msgs_per_sec ))
+	#print("planes in list %d msgs per sec %f" % (num_planes,msgs_per_sec ))
 
 	old_time = time_now
 	old_messages = messages_now
@@ -485,32 +487,29 @@ def read_planes() :
 				current_planes[hex] = { "hex" : hex }
 				this_plane = current_planes[hex]
 
-			try:
-				this_plane["lon"] = plane["lon"]
-			except:
-				pass
-			try:
-				this_plane["lat"] = plane["lat"]
-			except:
-				pass
+                        if "lon" in plane:
+                            this_plane["lon"] = plane["lon"]
 
-			try:
-				this_plane["flight"] = plane["flight"]
-			except:
-				pass
+                        if "lat" in plane:
+                            this_plane["lat"] = plane["lat"]
 
-			try:
-				this_plane["altitude"] = plane["alt_baro"]
-			except:
-				pass
+                        if "flight" in plane:
+                            this_plane["flight"] = plane["flight"]
+                        else:
+                            this_plane["flight"] = "UNKNOWN"
 
-			try:
-				this_plane["track"] = plane["track"]
-			except:
-				pass
+                        if "alt_baro" in plane:
+                            this_plane["altitude"] = plane["alt_baro"]
 
+                        if "track" in plane:
+                            this_plane["track"] = plane["track"]
+                        else:
+                            this_plane["track"] = 0.0 
 
                         try: 
+                                if "lat" not in this_plane or  "lon" not in this_plane:
+                                    continue
+                                    
                                 miles = Haversine([this_plane["lon"],this_plane["lat"]],me).nm
                                 if miles < 50: 
                                         indb= False
@@ -541,10 +540,18 @@ def read_planes() :
                                                         msg = "but found reg in ADSB Ex API for {0} {1}\n".format(this_plane["hex"],adsb['tail'])
                                                         print(msg.strip())
                                                         log.write(msg)
-                                                        adsb_data.write(json.dumps(adsb))
-                                                        adsb_data.write("\n")
-                                                        adsb_data.flush()
+                                                        global sequence
+                                                        sequence = sequence + 1
+                                                        adsb['seq'] = sequence
+                                                        try:
+                                                            adsb_data.write(" start : ")
+                                                            adsb_data.write(json.dumps(adsb))
+                                                            adsb_data.write(" from api\n")
+                                                        except Exception as e:
+                                                            print("error writing to adsb_data {}".format(e))
+
                                                         this_plane["reg"] = adsb['tail']
+                                                        this_plane["plane"] = adsb['type']
                                                         this_plane["indb"] = True
                                                         indb = True
                                                         try:
@@ -554,7 +561,7 @@ def read_planes() :
                                                             pass
                                                     else:
                                                         print("flight {0} not found in ADSBEx api either - give up".format(this_plane["hex"]))
-                                                        unresolved_modes.write(hex)
+                                                        unresolved_modes.write(json.dumps(this_plane))
                                                         unresolved_modes.write("\n")
                                                         unresolved_modes.flush()
 
@@ -592,13 +599,24 @@ def read_planes() :
                                                 except:
                                                         pass
                                         else:
+                                            #wait for the plane to be at least 1 mile further than its nearest point
+                                            from_min = miles - this_plane["miles"]
+                                            if  from_min   < 1.0 :
+                                                pass
+                                                #print("{} min reached? wait for plane to move out by 1.0 miles {}".format(this_plane["hex"],from_min))
+                                            else:
                                                 token=""
                                                 try:
                                                         pdone = this_plane["done"]
                                                 except:
                                                         this_plane["done"]=1
 #                                                        Sat Feb 16 14:08:39 2019 BEE4350  4057f2 G-FBEJ Embraer ERJ 190-200 Lr   track=254.2  alt=17000 nearest_point=0.814259
-                                                        pd = "%s flt=%s  hex=%s  tail=%s  type='%s'  route='%s' track=%s  alt=%s nearest_point=%f " % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["plane"],this_plane["route"],this_plane["track"],this_plane["altitude"],this_plane["miles"])
+                                                        global pd
+                                                        pd=""
+                                                        try:
+                                                            pd = "%s flt=%8s hex=%6s tail=%6s track=%6s alt=%6s nearest_point=%02.3f type='%30s' route='%s'" % (time.asctime( time.localtime(time.time()) ),this_plane["flight"],this_plane["hex"],this_plane["reg"], this_plane["track"],this_plane["altitude"],this_plane["miles"],this_plane['plane'],this_plane['route'])
+                                                        except Exception as e:
+                                                            print("excpetion formatting string {}".format(e))
 #cols = " ts, flight, hex , tail , alt ,  track , nearest_point , lat  , long   " 
                                                         try:
                                                             sqldb.insert_data((time.time(),this_plane["flight"],this_plane["hex"],this_plane["reg"],this_plane["altitude"],this_plane["track"],this_plane["miles"],this_plane["lat"],this_plane["lon"]))
@@ -618,7 +636,9 @@ def read_planes() :
                                                         log.write("%s \n" % (pd) )
                                                         log.flush()
                         except Exception as e:
-                                pass
+                            print("processing of planes exception {} :  {}\n".format(hex,e))
+                            log.write("processing of planes exception {} : {}\n".format(hex,e))
+                            print(json.dumps(this_plane,indent=4))
 
 			this_plane["touched"] = time.time()
 			current_planes[hex] = this_plane
@@ -647,7 +667,7 @@ def tick_tock(c):
         else:
             d = ""
 
-        txt = "Tick: %s %s\n" % (d,ascii_time())
+        txt = "Tick: %s %s" % (d,ascii_time())
         print(txt)
         log.write(txt)
         heartbeat = c
@@ -655,14 +675,14 @@ def tick_tock(c):
 sqldb.attach_sqldb()
 
 while 1:
-	global api_requests
-	global record_period
+	#global api_requests
+	#global record_period
 	time.sleep(5)
 	read_planes()
 	now = time.time()
         update_routes(now)
         tick_tock(now)
-	record_temp(now)
+	#record_temp(now)
 
 	four=0
 	delete_list = []
