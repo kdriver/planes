@@ -1,3 +1,4 @@
+import subprocess
 import time
 from loggit import loggit
 from loggit import TO_FILE
@@ -12,12 +13,16 @@ conn_base=None
 adsb_cache=None
 
 modes_map={}
-last_updated = time.time()
+last_updated = time.time() 
+#last_updated = time.time() - (60*60*25)
 interval = (60*60*24)
 
 
 create_text = """ CREATE TABLE IF NOT EXISTS cache ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer); """ 
 cols = "  hex , tail , type , seen  " 
+
+def ascii_time():
+    return time.asctime( time.localtime(time.time()))
 
 def attach_adsbex_cache():
     global adsbex_cache
@@ -45,8 +50,8 @@ def insert_adsbex_cache(data_tuple):
 
 def call_command(command):
     t = time.time()
-    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
-    loggit(txt,loggit.FILE+loggit.SCREEN)
+    txt = str(subprocess.check_output(command,stderr=subprocess.STDOUT))
+    loggit(txt)
     return txt
 
 def init_reference_data():
@@ -57,13 +62,18 @@ def init_reference_data():
         loggit("Standing data")
         conn = sqlite3.connect('StandingData.sqb')
         loggit("Base station ")
-        conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
+        conn_base = sqlite3.connect('./BaseStation.sqb')
         loggit("Modes list ")
         modes_file = open("./modes.tsv")
         read_tsv = csv.reader(modes_file,delimiter='	')
         modes_map={}
+        counter=0
         for row in read_tsv:
             modes_map[row[2]] = row[4]
+            counter=counter+1
+            if not(counter % 1000):
+                print(".",end='',flush=True)
+                
         loggit("Connected to databases")
 
 def update_reference_data():
@@ -75,14 +85,16 @@ def update_reference_data():
             loggit(txt)
             try:
                 #conn.close() 
-                ans = call_command(["wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                print("call wget command ")
+                ans = call_command(["/usr/bin/wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
+                print("wget command returned")
                 if  'Omitting' in ans :
                     print("No download - so no need to decompress \n")
                 else:
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
-                conn = sqlite3.connect('StandingData.sqb')
-            except:
-                print("Complete disaster - cant re open route database")
+                conn = sqlite3.connect('./StandingData.sqb')
+            except Exception as e:
+                print("Complete disaster - cant re open route databasei {}".format(e))
             txt = "refresh the BaseStation  database %s\n"  % ascii_time()
             loggit(txt)
             try:
@@ -90,7 +102,7 @@ def update_reference_data():
                 loggit("call script and try to refresh database")
                 ans = call_command(["./update_BaseStation.sh"])
                 loggit("script returned")
-                conn_base = sqlite3.connect('./basestation/BaseStation.sqb')
+                conn_base = sqlite3.connect('./BaseStation.sqb')
                 loggit("reconnected to the Base station database %s"  % ascii_time())
                 modes_file = open("./modes.tsv")
                 read_tsv = csv.reader(modes_file,delimiter='	')
@@ -123,14 +135,13 @@ def add_tail_and_type(icoa,plane):
                 ptype = "{}".format(txt[2])
             if txt[3] != None:
                 plane['Owner'] = "{}".format(txt[3])
-
     except Exception as e:
         print("get_reg - database exception %s " % e )
 
     if reg == None:
         if the_hex in modes_map:
             reg = modes_map[the_hex]
-
+    
     if reg == None:
         answer = adsbex_cache.execute("SELECT tail,type from cache WHERE hex = '{}'".format(the_hex))
         txt = answer.fetchone()
@@ -140,10 +151,14 @@ def add_tail_and_type(icoa,plane):
             ptype = txt[1]
             answer = adsbex_cache.execute("UPDATE cache SET seen = seen + 1 WHERE hex = '{}'".format(the_hex))
             adsbex_cache.commit()
-        
-
+    
     if reg == None:
-        adsb = adsbex_query.adsb_lookup(the_hex)
+        try:
+            adsb = adsbex_query.adsb_lookup(the_hex)
+        except Exception as e:
+            loggit("adsb lookup exception {}".format(e),BOTH)
+            adsb = None
+
         if adsb != None:
             reg = adsb['tail']
             ptype = adsb['type']
@@ -152,7 +167,6 @@ def add_tail_and_type(icoa,plane):
                     plane['route'] = "{}->{}".format(adsb['from'],adsb['to'])
     if reg == None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
-            
     if reg != None:
         plane['tail'] = reg
     if ptype != None:
@@ -173,11 +187,3 @@ def add_reference_data(icoa,plane):
     add_tail_and_type(icoa,plane)
     if 'route' not in plane:
         add_route(icoa,plane)
-
-
-
-
-
-
-
-

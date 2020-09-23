@@ -1,10 +1,12 @@
 import json
 import time
 import copy
+import sqldb
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
 from loggit import GREEN_TEXT as GREEN_TEXT
+from loggit import YELLOW_TEXT as YELLOW_TEXT
 from loggit import RED_TEXT as RED_TEXT
 from  Haversine import Haversine
 from reference_data import update_reference_data
@@ -40,6 +42,11 @@ def nearest_point(plane):
             else:
                 pd = pd + " {} ".format(plane[item])
 
+    try:
+        sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["miles"],plane["lat"],plane["lon"]))
+    except:
+        pass
+
     plane['reported'] = 1
     if 'expired' in plane:
         pd = pd + ' expired '
@@ -48,7 +55,11 @@ def nearest_point(plane):
             loggit(pd,BOTH,GREEN_TEXT)
             tweet(pd)
         else:
-            loggit(pd,BOTH)
+            if 'plane' in plane:
+                if 'DA42' in plane['plane']: 
+                    loggit(pd,BOTH,YELLOW_TEXT)
+                else:
+                    loggit(pd,BOTH)
     else:
         pd = pd + " " + json.dumps(plane)
         loggit(pd,BOTH)
@@ -86,12 +97,13 @@ def read_planes():
             if 'lat' in this_plane and 'lon' in this_plane:
                 try:
                     miles = Haversine([this_plane["lon"],this_plane["lat"]],home).nm
+                    this_plane['current_miles'] = miles
                 except Exception as e:
                     print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
                     continue
 
             #if miles < 50:
-            if  miles < 50 and 'enriched' not in this_plane:
+            if  miles < 200 and 'enriched' not in this_plane:
                 enrich(icoa,this_plane)
 #                print("plane {} {: <02.2f} {}".format(icoa,miles,this_plane))
 
@@ -100,7 +112,7 @@ def read_planes():
                 if miles < this_plane['miles']:
                     this_plane['miles'] = miles
                     if 'reported' in this_plane:
-                        loggit("{} re approching".format(icoa),BOTH)
+                        #loggit("{} re approching".format(icoa),BOTH)
                         del this_plane['reported']
                 else:
                     if (miles - this_plane['miles']) > (this_plane['miles']*0.1):
@@ -115,12 +127,14 @@ def read_planes():
 init_reference_data()
 update_reference_data()
 start_webserver()
+last_tick = 0
+sqldb.attach_sqldb()
 
 while 1:
     read_planes()
     delete_list = []
+    now = time.time()
     for icoa in all_planes:
-        now = time.time()
         if (now - all_planes[icoa]['touched']) > 60:
             delete_list.append(icoa)
 
@@ -133,4 +147,8 @@ while 1:
        # print("delete {}".format(plane))
     update_reference_data() 
     update_plane_data(all_planes)
+    if ( now - last_tick ) >  60*60*1000 :
+        loggit("{} planes being tracked ".format(len(all_planes)))
+        last_tick = now
     time.sleep(5)
+

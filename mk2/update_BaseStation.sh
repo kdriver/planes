@@ -1,4 +1,5 @@
 #!/bin/sh
+echo "Update reference data"
 remote=`curl --silent --head  http://data.flightairmap.com/data/basestation/BaseStation.sqb.gz  | grep Last | sed -e 's/Last-Modified://'`
 trem=`date --date="$remote" +%s`
 if test -f ./BaseStation.sqb.gz ; then
@@ -50,3 +51,29 @@ else
 	touch -d "@$trem" ./modes.tsv.gz
 fi
 exit 0
+url='http://data.flightairmap.com/data/routes.tsv.gz'
+file='routes.tsv.gz'
+remote=`curl --silent --head  $url  | grep Last | sed -e 's/Last-Modified://'`
+trem=`date --date="$remote" +%s`
+if ! test -f $file ; then
+	echo "File doesnt exist - redownload it "
+	curl -o $file  $url   && gunzip  -f --keep $file
+	touch -d "@$trem" $file 
+fi
+	echo "file  $file "
+	loc=`stat -c %y $file
+	tloc=`date --date="$loc" +%s`
+	echo  "local  ${tloc}",`date -d@$tloc`
+	echo  "remote ${trem}",`date -d@$trem`
+	if [ $(($tloc)) -lt $(($trem)) ] ; then 
+		echo "Download it "
+		echo "remote $remote"
+		echo "local $loc"
+		curl -o $file  $url
+		echo "unzip it"
+		gunzip -f --keep $file
+		touch -d "@$trem" $file
+	else
+		echo "It hasnt been updated so do nothing "
+	fi
+
