@@ -2,13 +2,14 @@ import json
 import time
 import copy
 import sqldb
+import say
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
 from loggit import GREEN_TEXT as GREEN_TEXT
 from loggit import YELLOW_TEXT as YELLOW_TEXT
 from loggit import RED_TEXT as RED_TEXT
-from  Haversine import Haversine
+from Haversine import Haversine
 from reference_data import update_reference_data
 from reference_data import init_reference_data
 from reference_data import add_reference_data
@@ -54,6 +55,10 @@ def nearest_point(plane):
         if plane['miles'] < TWEET_RADIUS:
             loggit(pd,BOTH,GREEN_TEXT)
             tweet(pd)
+            txt = "plane overhead"
+            if 'Owner' in plane:
+                txt = txt + " " + plane['Owner']
+            say.speak(txt)
         else:
             if 'plane' in plane:
                 if 'DA42' in plane['plane']: 
@@ -123,7 +128,6 @@ def read_planes():
                 this_plane['miles'] = miles
 
                 #print("->this plane {}".format(this_plane))
-
 init_reference_data()
 update_reference_data()
 start_webserver()

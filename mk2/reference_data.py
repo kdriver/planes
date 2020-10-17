@@ -7,6 +7,7 @@ from loggit import RED_TEXT as RED_TEXT
 import sqlite3
 import csv
 import adsbex_query
+from add_to_unknown import add_to_unknown_planes
 
 conn=None
 conn_base=None
@@ -152,6 +153,19 @@ def add_tail_and_type(icoa,plane):
             answer = adsbex_cache.execute("UPDATE cache SET seen = seen + 1 WHERE hex = '{}'".format(the_hex))
             adsbex_cache.commit()
     
+    #lookup data in a locally administered database manually maintanined
+    if reg == None:
+        try:
+            conn_unknown = sqlite3.connect("unknown_planes.sqb")
+            answer = conn_unknown.execute("SELECT registration,type from planes WHERE icoa = '{}'".format(the_hex))
+            txt = answer.fetchone()
+            if txt != None and txt[0] != None:
+                reg = txt[0]
+                ptype = txt[1]
+                loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),BOTH)
+        except Exception as e:
+            loggit("problem reading unknown_planes database {}".format(e))
+
     if reg == None:
         try:
             adsb = adsbex_query.adsb_lookup(the_hex)
@@ -167,6 +181,8 @@ def add_tail_and_type(icoa,plane):
                     plane['route'] = "{}->{}".format(adsb['from'],adsb['to'])
     if reg == None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
+        reg,ptype = add_to_unknown_planes(icoa)
+
     if reg != None:
         plane['tail'] = reg
     if ptype != None:
