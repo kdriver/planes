@@ -162,7 +162,10 @@ def add_tail_and_type(icoa,plane):
             if txt != None and txt[0] != None:
                 reg = txt[0]
                 ptype = txt[1]
+                conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icoa = '{}'".format(the_hex))
+                conn_unknown.commit()
                 loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),BOTH)
+            conn_unknown.close()
         except Exception as e:
             loggit("problem reading unknown_planes database {}".format(e))
 

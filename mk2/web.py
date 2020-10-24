@@ -24,12 +24,14 @@ def page():
     txt = txt + '<th> cur dist </th>'
     txt = txt + '<th> type </th>'
     txt = txt + '<th> alt </th>'
+    txt = txt + '<th> clat </th>'
+    txt = txt + '<th> clon </th>'
     txt = txt + '<th> route </th>'
     txt = txt + '</tr>'
     for plane in planes:
         p = planes[plane]
         txt = txt + '<tr>'
-        for item in ['icoa','flight','tail','miles','current_miles','plane','alt_baro','route']:
+        for item in ['icoa','flight','tail','miles','current_miles','plane','alt_baro','closest_lat','closest_lon''route']:
             txt = txt + '<td>'
             if item in p:
                 if type(p[item]) == float:

@@ -3,6 +3,8 @@ import time
 import copy
 import sqldb
 import say
+import math
+import requests
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
@@ -22,6 +24,8 @@ home=[-1.95917,50.83583]
 all_planes={}
 TWEET_RADIUS=2.0
 
+osm = requests.Session()
+
 def planes_table():
     page = "<th>"
 
@@ -36,15 +40,29 @@ def enrich(icoa,plane):
 
 def nearest_point(plane):
     pd = "{} -> nearest   {} ".format(get_time(),plane['icoa'])
-    for item in ['miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
+    for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
         if item in plane:
-            if item in {'miles','track'}:
+            if item in {'closest_miles','track'}:
                 pd = pd + " {:>7.2f} ".format(plane[item])
             else:
                 pd = pd + " {} ".format(plane[item])
 
     try:
-        sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["miles"],plane["lat"],plane["lon"]))
+        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(plane['closest_lat'],plane['closest_lon'])
+        #print(req)
+        resp = osm.get(url=req)
+        pos = json.loads(resp.text)
+        place="unknown"
+        if 'display_name' in pos:
+                place = pos['display_name']
+        else:
+                place = "somewhere"
+        pd = pd + " : " + place
+    except Exception as e:
+        loggit("could not access OSM API {} ".format(e))
+            
+    try:
+        sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
     except:
         pass
 
@@ -55,9 +73,17 @@ def nearest_point(plane):
         if plane['miles'] < TWEET_RADIUS:
             loggit(pd,BOTH,GREEN_TEXT)
             tweet(pd)
-            txt = "plane overhead"
+            txt = "plane overhead "
             if 'Owner' in plane:
                 txt = txt + " " + plane['Owner']
+            m = int(plane['miles'])
+            m = round(m,1)
+            
+            if 'alt_baro' in plane:
+                h = math.floor(int(plane['alt_baro'])/100)
+                txt = txt + " at " + str(h) + " hundred feet"
+
+            txt = txt + " distance {} miles".format(m)
             say.speak(txt)
         else:
             if 'plane' in plane:
@@ -84,11 +110,12 @@ def read_planes():
         #print("num planes {}".format(num_planes))
 
         for plane in planes:
-            miles = 1000
+            start_miles = 1000
+            miles = start_miles
             try:
                 icoa = plane["hex"].strip().upper()
                 if icoa not in all_planes:
-                    all_planes[icoa] = { "icoa" : icoa }
+                    all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles }
                 this_plane = all_planes[icoa]
                 this_plane['touched'] = time.time()
             except Exception as e:
@@ -103,6 +130,16 @@ def read_planes():
                 try:
                     miles = Haversine([this_plane["lon"],this_plane["lat"]],home).nm
                     this_plane['current_miles'] = miles
+                    if miles < this_plane['miles']:
+                        this_plane['closest_lat'] = float(this_plane['lat'])
+                        this_plane['closest_lon'] = float(this_plane['lon'])
+                        this_plane['closest_miles'] = miles
+                        if this_plane['miles'] == start_miles:
+                            loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                        if 'reported' in this_plane:
+                            del this_plane['reported']
+                        this_plane['miles'] = miles
+
                 except Exception as e:
                     print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
                     continue
@@ -112,22 +149,11 @@ def read_planes():
                 enrich(icoa,this_plane)
 #                print("plane {} {: <02.2f} {}".format(icoa,miles,this_plane))
 
-            if 'miles' in this_plane:
                 #print("plane {} now {}  previous {} {}".format(icoa,miles,this_plane['miles'],miles < this_plane['miles']))
-                if miles < this_plane['miles']:
-                    this_plane['miles'] = miles
-                    if 'reported' in this_plane:
-                        #loggit("{} re approching".format(icoa),BOTH)
-                        del this_plane['reported']
-                else:
-                    if (miles - this_plane['miles']) > (this_plane['miles']*0.1):
-                        if 'reported' not in this_plane and this_plane['miles'] < 50:
-                            nearest_point(this_plane)
-            else:
-                loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
-                this_plane['miles'] = miles
+            if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
+                if 'reported' not in this_plane and this_plane['miles'] < 50:
+                    nearest_point(this_plane)
 
-                #print("->this plane {}".format(this_plane))
 init_reference_data()
 update_reference_data()
 start_webserver()
