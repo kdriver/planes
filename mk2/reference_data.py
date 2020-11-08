@@ -4,6 +4,7 @@ from loggit import loggit
 from loggit import TO_FILE
 from loggit import BOTH
 from loggit import RED_TEXT as RED_TEXT
+import os
 import sqlite3
 import csv
 import adsbex_query
@@ -14,9 +15,12 @@ conn_base=None
 adsb_cache=None
 
 modes_map={}
-last_updated = time.time() 
 #last_updated = time.time() - (60*60*25)
 interval = (60*60*24)
+if os.getenv("UPDATE") != None:
+    last_updated = time.time() - ( 2*interval)
+else:
+    last_updated = time.time() 
 
 
 create_text = """ CREATE TABLE IF NOT EXISTS cache ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer); """ 
@@ -52,7 +56,7 @@ def insert_adsbex_cache(data_tuple):
 def call_command(command):
     t = time.time()
     txt = str(subprocess.check_output(command,stderr=subprocess.STDOUT))
-    loggit(txt)
+    loggit(txt.decode('utf-8'))
     return txt
 
 def init_reference_data():
@@ -95,7 +99,7 @@ def update_reference_data():
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('./StandingData.sqb')
             except Exception as e:
-                print("Complete disaster - cant re open route databasei {}".format(e))
+                print("Complete disaster - cant re open route database {}".format(e))
             txt = "refresh the BaseStation  database %s\n"  % ascii_time()
             loggit(txt)
             try:
@@ -113,7 +117,7 @@ def update_reference_data():
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
                 exit()
-            loggit("updates completed\n")
+            loggit("\nupdates completed\n")
 
 
 def add_tail_and_type(icoa,plane):
@@ -185,11 +189,15 @@ def add_tail_and_type(icoa,plane):
     if reg == None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
         reg,ptype = add_to_unknown_planes(icoa)
-
+        
     if reg != None:
         plane['tail'] = reg
     if ptype != None:
         plane['plane'] = ptype
+
+    return reg
+
+    
 
 def add_route(icoa,plane):
     global conn
@@ -203,6 +211,7 @@ def add_route(icoa,plane):
         plane['route'] = route
 
 def add_reference_data(icoa,plane):
-    add_tail_and_type(icoa,plane)
+    result = add_tail_and_type(icoa,plane)
     if 'route' not in plane:
         add_route(icoa,plane)
+    return result

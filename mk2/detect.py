@@ -5,6 +5,7 @@ import sqldb
 import say
 import math
 import requests
+import os
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
@@ -25,6 +26,9 @@ all_planes={}
 TWEET_RADIUS=2.0
 
 osm = requests.Session()
+dump_planes = False
+dump_icoa = None
+dump_time = 0
 
 def planes_table():
     page = "<th>"
@@ -35,7 +39,13 @@ def get_time():
     return answer
 
 def enrich(icoa,plane):
-    add_reference_data(icoa,plane)
+    result  = add_reference_data(icoa,plane)
+     # if there is a tilde in the icoa and we could not resolve it, then in 60 seconds dump the planes
+    if result == None and '~' in icoa:
+        global dump_time,dump_icoa,dump_planes
+        dump_time = time.time() + 60
+        dump_icoa = icoa
+        dump_planes = True
     plane['enriched'] = 1
 
 def nearest_point(plane):
@@ -57,7 +67,6 @@ def nearest_point(plane):
                 place = pos['display_name']
         else:
                 place = "somewhere"
-        pd = pd + " : " + place
     except Exception as e:
         loggit("could not access OSM API {} ".format(e))
             
@@ -71,19 +80,22 @@ def nearest_point(plane):
         pd = pd + ' expired '
     if 'miles' in plane:
         if plane['miles'] < TWEET_RADIUS:
-            loggit(pd,BOTH,GREEN_TEXT)
             tweet(pd)
+            pd = pd + " : " + place
+            loggit(pd,BOTH,GREEN_TEXT)
             txt = "plane overhead "
             if 'Owner' in plane:
                 txt = txt + " " + plane['Owner']
             m = int(plane['miles'])
-            m = round(m,1)
-            
+
             if 'alt_baro' in plane:
                 h = math.floor(int(plane['alt_baro'])/100)
-                txt = txt + " at " + str(h) + " hundred feet"
+                if h > 9:
+                    txt = txt + " at " + str(h/10) + " thousand feet"
+                else:
+                    txt = txt + " at " + str(h) + " hundred feet"
 
-            txt = txt + " distance {} miles".format(m)
+            txt = txt + " distance {:>1.1f} miles".format(m)
             say.speak(txt)
         else:
             if 'plane' in plane:
@@ -160,6 +172,29 @@ start_webserver()
 last_tick = 0
 sqldb.attach_sqldb()
 
+def dump_planes(icoa):
+        loggit("Dump planes with similar distance to {}".format(icoa))
+        if icoa in all_planes:
+            target = all_planes[icoa]
+            if 'miles' in target:
+                distance = int(target['miles'])
+                loggit("Dump ICOA {} , {}".format(icoa,json.dumps(target,indent=4)))
+                for plane in all_planes:
+                        this_plane = all_planes[plane]
+                        if abs(this_plane['miles'] - distance) < 10:
+                                txt = ""
+                                for item in ['icoa','track','tail','miles','alt_baro','lat','lon']:
+                                        if item in this_plane:
+                                                txt = txt + " {}:{}".format(item,this_plane[item])
+                                
+                                loggit(txt)
+            else:
+                loggit("could not find 'miles' in all_planes")
+                pass
+        else:
+            loggit("could not find {} in all_planes".format(icoa))
+            pass
+
 while 1:
     read_planes()
     delete_list = []
@@ -177,6 +212,17 @@ while 1:
        # print("delete {}".format(plane))
     update_reference_data() 
     update_plane_data(all_planes)
+    if dump_planes == True:
+        if now > dump_time:
+                dump_planes(dump_icoa)
+                dump_planes = False
+
+    if os.path.isfile("check_icoa"):
+        with open('check_icoa') as f: 
+                s = f.read()
+                dump_planes(str(s).strip().upper())
+                os.remove('check_icoa')
+
     if ( now - last_tick ) >  60*60*1000 :
         loggit("{} planes being tracked ".format(len(all_planes)))
         last_tick = now

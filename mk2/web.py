@@ -19,7 +19,7 @@ def page():
     txt = txt + '<th> ICOA </th>'
     txt = txt + '<th> flight </th>'
     txt = txt + '<th> tail </th>'
-    txt = txt + '<th> distance </th>'
+    txt = txt + '<th> closest </th>'
 #    txt = txt + '<th> nearest </th>'
     txt = txt + '<th> cur dist </th>'
     txt = txt + '<th> type </th>'
@@ -31,7 +31,7 @@ def page():
     for plane in planes:
         p = planes[plane]
         txt = txt + '<tr>'
-        for item in ['icoa','flight','tail','miles','current_miles','plane','alt_baro','closest_lat','closest_lon''route']:
+        for item in ['icoa','flight','tail','closest_miles','current_miles','plane','alt_baro','closest_lat','closest_lon','route']:
             txt = txt + '<td>'
             if item in p:
                 if type(p[item]) == float:
@@ -101,7 +101,7 @@ function myFunction() {
           tr = table.getElementsByTagName("tr");
           for (i = 1; i < tr.length; i++) {
                txt = ""
-               for (j=0;j<7;j++){
+               for (j=0;j<9;j++){
                        td = tr[i].getElementsByTagName("td")[j];
                        if (td) {
                           txtValue = td.textContent || td.innerText;
@@ -114,6 +114,7 @@ function myFunction() {
                        tr[i].style.display = "none";
                }
              }       
+             sortTable();
            }
 function sortTable() {
     var table, rows, switching, i, x, y, shouldSwitch;

@@ -78,9 +78,10 @@ def do_the_work(say):
 
 #the cast object sometimes seems to block, so run in a sub process
 def speak(say):
+    return
     now = time.time()
     loggit("spawn a speaking process for {}".format(say),BOTH)
     p = Process(target=do_the_work,args=(say,))
     p.start()
-    p.join(10)
+    p.join(15)
     loggit(" speaking process for {} done , took {}".format(say,time.time()-now),BOTH)

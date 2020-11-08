@@ -17,7 +17,7 @@ if test -f ./BaseStation.sqb.gz ; then
 		gunzip -f --keep BaseStation.sqb.gz
 		touch -d "@$trem" ./BaseStation.sqb.gz
 	else
-		echo "It hasnt been updated so do nothing "
+		echo "\nBasestation.sqb.gz  It hasnt been updated so do nothing "
 	fi
 else
 	echo "File doesnt exist - redownload it "
@@ -42,7 +42,7 @@ if test -f ./modes.tsv.gz ; then
 		cat modes.tsv | tr '' '_' > /tmp/modes ; cp /tmp/modes ./modes.tsv
 		touch -d "@$trem" ./modes.tsv.gz
 	else
-		echo "It hasnt been updated so do nothing "
+		echo "\nmodes.tsv.gz It hasnt been updated so do nothing "
 	fi
 else
 	echo "File doesnt exist - redownload it "
@@ -74,6 +74,6 @@ fi
 		gunzip -f --keep $file
 		touch -d "@$trem" $file
 	else
-		echo "It hasnt been updated so do nothing "
+		echo "\nroutes.tsv.gz It hasnt been updated so do nothing "
 	fi
 
