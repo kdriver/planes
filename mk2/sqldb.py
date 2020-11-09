@@ -23,7 +23,7 @@ def insert_data(data_tuple):
             cur = sql_conn.cursor()
             cur.execute("INSERT INTO planes(%s) VALUES (?,?,?,?,?,?,?,?,?,?)" % cols,data_tuple)
             sql_conn.commit();
-        except Exception as e:
+        except :
             pass
             #print(e)
 

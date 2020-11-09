@@ -7,7 +7,6 @@
 #
 #
 
-import sys
 import pychromecast
 import os
 import os.path
@@ -15,7 +14,6 @@ from gtts import gTTS
 import time
 import hashlib
 import socket
-import json
 from multiprocessing import Process
 from loggit import loggit,BOTH
 

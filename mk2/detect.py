@@ -1,6 +1,5 @@
 import json
 import time
-import copy
 import sqldb
 import say
 import math
@@ -11,13 +10,12 @@ from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
 from loggit import GREEN_TEXT as GREEN_TEXT
 from loggit import YELLOW_TEXT as YELLOW_TEXT
-from loggit import RED_TEXT as RED_TEXT
+#from loggit import RED_TEXT as RED_TEXT
 from Haversine import Haversine
 from reference_data import update_reference_data
 from reference_data import init_reference_data
 from reference_data import add_reference_data
 from twitter import tweet
-from http.server import HTTPServer,BaseHTTPRequestHandler
 from web import start_webserver
 from web import update_plane_data
 
@@ -30,9 +28,6 @@ dump_planes = False
 dump_icoa = None
 dump_time = 0
 
-def planes_table():
-    page = "<th>"
-
 
 def get_time():
     answer = time.asctime(time.localtime(time.time()))
@@ -40,8 +35,11 @@ def get_time():
 
 def enrich(icoa,plane):
     result  = add_reference_data(icoa,plane)
-     # if there is a tilde in the icoa and we could not resolve it, then in 60 seconds dump the planes
-    if result == None and '~' in icoa:
+    # if there is a tilde in the icoa and we could not resolve it, then in 60 seconds dump the planes
+    if result is None:
+        loggit("could not enrich plane")
+    if result is None and '~' in icoa:
+        loggit("found tilde in icoa , trigger a dump of planes arounf {}".format(icoa))
         global dump_time,dump_icoa,dump_planes
         dump_time = time.time() + 60
         dump_icoa = icoa
@@ -64,9 +62,9 @@ def nearest_point(plane):
         pos = json.loads(resp.text)
         place="unknown"
         if 'display_name' in pos:
-                place = pos['display_name']
+            place = pos['display_name']
         else:
-                place = "somewhere"
+            place = "somewhere"
     except Exception as e:
         loggit("could not access OSM API {} ".format(e))
             
@@ -115,10 +113,8 @@ def read_planes():
             print("error - can't open aircraft.json")
 
         global all_planes
-        time_now = data["now"]
-        messages = data["messages"]
         planes   = data["aircraft"]
-        num_planes = len(planes)
+        #num_planes = len(planes)
         #print("num planes {}".format(num_planes))
 
         for plane in planes:
@@ -135,8 +131,8 @@ def read_planes():
                 continue
 
             for  attr in ['lon','lat','flight','track','alt_baro']:
-               if attr in plane:
-                   this_plane[attr] = plane[attr]
+                if attr in plane:
+                    this_plane[attr] = plane[attr]
 
             if 'lat' in this_plane and 'lon' in this_plane:
                 try:
@@ -156,15 +152,13 @@ def read_planes():
                     print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
                     continue
 
-            #if miles < 50:
             if  miles < 200 and 'enriched' not in this_plane:
                 enrich(icoa,this_plane)
-#                print("plane {} {: <02.2f} {}".format(icoa,miles,this_plane))
 
-                #print("plane {} now {}  previous {} {}".format(icoa,miles,this_plane['miles'],miles < this_plane['miles']))
             if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
                 if 'reported' not in this_plane and this_plane['miles'] < 50:
                     nearest_point(this_plane)
+
 
 init_reference_data()
 update_reference_data()
@@ -172,28 +166,31 @@ start_webserver()
 last_tick = 0
 sqldb.attach_sqldb()
 
-def dump_planes(icoa):
-        loggit("Dump planes with similar distance to {}".format(icoa))
-        if icoa in all_planes:
-            target = all_planes[icoa]
-            if 'miles' in target:
-                distance = int(target['miles'])
-                loggit("Dump ICOA {} , {}".format(icoa,json.dumps(target,indent=4)))
-                for plane in all_planes:
-                        this_plane = all_planes[plane]
-                        if abs(this_plane['miles'] - distance) < 10:
-                                txt = ""
-                                for item in ['icoa','track','tail','miles','alt_baro','lat','lon']:
-                                        if item in this_plane:
-                                                txt = txt + " {}:{}".format(item,this_plane[item])
-                                
-                                loggit(txt)
-            else:
-                loggit("could not find 'miles' in all_planes")
-                pass
+def dump_the_planes(icoa):
+    loggit("Dump planes with similar distance to {}".format(icoa))
+    if icoa in all_planes:
+        target = all_planes[icoa]
+        if 'miles' in target:
+            ll_target = [target['lat'],target['lon']]
+            distance = int(target['miles'])
+            loggit("Dump ICOA {} distance {}, {}".format(icoa,distance, json.dumps(target,indent=4)))
+            for plane in all_planes:
+                this_plane = all_planes[plane]
+                proximity = 100
+                if 'lat' in this_plane and 'lon' in this_plane:
+                    ll_this = [ this_plane['lat'],this_plane['lon']]
+                    proximity = Haversine(ll_target,ll_this).nm
+                if proximity < 20:
+                    txt = " {}: priximity : {} ".format(icoa,proximity)
+                    for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
+                        if item in this_plane:
+                            txt = txt + " {}:{}".format(item,this_plane[item])
+                    loggit(txt)
         else:
-            loggit("could not find {} in all_planes".format(icoa))
-            pass
+            loggit("could not find 'miles' in all_planes")
+    else:
+        loggit("could not find {} in all_planes".format(icoa))
+
 
 while 1:
     read_planes()
@@ -209,22 +206,21 @@ while 1:
             p['expired'] = 1
             nearest_point(p)
         del all_planes[plane]
-       # print("delete {}".format(plane))
+        #print("delete {}".format(plane))
     update_reference_data() 
     update_plane_data(all_planes)
-    if dump_planes == True:
+    if dump_planes:
         if now > dump_time:
-                dump_planes(dump_icoa)
-                dump_planes = False
+            dump_the_planes(dump_icoa)
+            dump_planes = False
 
-    if os.path.isfile("check_icoa"):
+    if os.path.exists("check_icoa"):
         with open('check_icoa') as f: 
-                s = f.read()
-                dump_planes(str(s).strip().upper())
-                os.remove('check_icoa')
+            s = f.read()
+            dump_the_planes(str(s).strip().upper())
+        os.remove('check_icoa')
 
     if ( now - last_tick ) >  60*60*1000 :
         loggit("{} planes being tracked ".format(len(all_planes)))
         last_tick = now
     time.sleep(5)
-

@@ -1,7 +1,7 @@
 import subprocess
 import time
 from loggit import loggit
-from loggit import TO_FILE
+from loggit import TO_FILE,TO_SCREEN
 from loggit import BOTH
 from loggit import RED_TEXT as RED_TEXT
 import os
@@ -54,7 +54,6 @@ def insert_adsbex_cache(data_tuple):
 
 
 def call_command(command):
-    t = time.time()
     txt = str(subprocess.check_output(command,stderr=subprocess.STDOUT))
     loggit(txt.decode('utf-8'))
     return txt
@@ -82,7 +81,7 @@ def init_reference_data():
         loggit("Connected to databases")
 
 def update_reference_data():
-        global last_updated
+        global last_updated,conn,conn_base
         tnow = time.time()
         if ( tnow - last_updated ) > interval:
             last_updated = tnow  
@@ -186,6 +185,7 @@ def add_tail_and_type(icoa,plane):
             insert_adsbex_cache((the_hex,reg,ptype,1))
             if 'from' in adsb:
                     plane['route'] = "{}->{}".format(adsb['from'],adsb['to'])
+
     if reg == None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
         reg,ptype = add_to_unknown_planes(icoa)
@@ -194,6 +194,9 @@ def add_tail_and_type(icoa,plane):
         plane['tail'] = reg
     if ptype != None:
         plane['plane'] = ptype
+
+
+    #loggit("enriched result {} {}".format(icoa , reg),TO_SCREEN)
 
     return reg
 
@@ -212,6 +215,9 @@ def add_route(icoa,plane):
 
 def add_reference_data(icoa,plane):
     result = add_tail_and_type(icoa,plane)
+    if result == None:
+        loggit("add_reference_data no tail found",BOTH,RED_TEXT )
+
     if 'route' not in plane:
         add_route(icoa,plane)
     return result

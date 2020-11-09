@@ -1,7 +1,4 @@
-import time
 import copy
-import json
-from  json2html import *
 from http.server import HTTPServer,BaseHTTPRequestHandler
 
 import threading
