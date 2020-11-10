@@ -46,6 +46,22 @@ def enrich(icoa,plane):
         dump_planes = True
     plane['enriched'] = 1
 
+def get_place(clat,clon):
+    try:
+        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(clat,clon)
+        resp = osm.get(url=req)
+        pos = json.loads(resp.text)
+        place="unknown"
+        if 'display_name' in pos:
+            place = pos['display_name']
+        else:
+            place = "somewhere"
+    except Exception as e:
+        loggit("could not access OSM API {} ".format(e))
+
+    return place[0:90]
+            
+    
 def nearest_point(plane):
     pd = "{} -> nearest   {} ".format(get_time(),plane['icoa'])
     for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
@@ -56,26 +72,22 @@ def nearest_point(plane):
                 pd = pd + " {} ".format(plane[item])
 
     try:
-        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(plane['closest_lat'],plane['closest_lon'])
-        #print(req)
-        resp = osm.get(url=req)
-        pos = json.loads(resp.text)
-        place="unknown"
-        if 'display_name' in pos:
-            place = pos['display_name']
-        else:
-            place = "somewhere"
-    except Exception as e:
-        loggit("could not access OSM API {} ".format(e))
-            
-    try:
         sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
     except:
         pass
 
-    plane['reported'] = 1
     if 'expired' in plane:
         pd = pd + ' expired '
+
+    linelen=145
+    pd = pd[0:linelen]
+    if len(pd) < 145:
+        pd =  pd +" "*(linelen-len(pd))
+
+    place = get_place(plane['closest_lat'],plane['closest_lon'])
+
+    plane['reported'] = 1
+
     if 'miles' in plane:
         if plane['miles'] < TWEET_RADIUS:
             tweet(pd)
@@ -96,6 +108,7 @@ def nearest_point(plane):
             txt = txt + " distance {:>1.1f} miles".format(m)
             say.speak(txt)
         else:
+            pd = pd + " : " + place
             if 'plane' in plane:
                 if 'DA42' in plane['plane']: 
                     loggit(pd,BOTH,YELLOW_TEXT)
