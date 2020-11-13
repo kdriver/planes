@@ -54,7 +54,7 @@ def insert_adsbex_cache(data_tuple):
 
 
 def call_command(command):
-    txt = str(subprocess.check_output(command,stderr=subprocess.STDOUT))
+    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
     loggit(txt.decode('utf-8'))
     return txt
 
@@ -167,7 +167,7 @@ def add_tail_and_type(icoa,plane):
                 ptype = txt[1]
                 conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icoa = '{}'".format(the_hex))
                 conn_unknown.commit()
-                loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),BOTH)
+                #loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),BOTH)
             conn_unknown.close()
         except Exception as e:
             loggit("problem reading unknown_planes database {}".format(e))

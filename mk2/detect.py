@@ -39,7 +39,7 @@ def enrich(icoa,plane):
     if result is None:
         loggit("could not enrich plane")
     if result is None and '~' in icoa:
-        loggit("found tilde in icoa , trigger a dump of planes arounf {}".format(icoa))
+        loggit("found tilde in icoa , trigger a dump of planes around {}".format(icoa))
         global dump_time,dump_icoa,dump_planes
         dump_time = time.time() + 60
         dump_icoa = icoa
@@ -47,11 +47,11 @@ def enrich(icoa,plane):
     plane['enriched'] = 1
 
 def get_place(clat,clon):
+    place = "unknown"
     try:
         req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(clat,clon)
         resp = osm.get(url=req)
         pos = json.loads(resp.text)
-        place="unknown"
         if 'display_name' in pos:
             place = pos['display_name']
         else:
@@ -68,9 +68,10 @@ def nearest_point(plane):
         if item in plane:
             if item in {'closest_miles','track'}:
                 pd = pd + " {:>7.2f} ".format(plane[item])
+            elif  item in {'flight','tail','alt_baro'}:
+                pd = pd + "{0:7} ".format(plane[item])
             else:
-                pd = pd + " {} ".format(plane[item])
-
+                pd = pd + " {:<} ".format(plane[item])
     try:
         sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
     except:
@@ -186,6 +187,7 @@ def dump_the_planes(icoa):
         if 'miles' in target:
             ll_target = [target['lat'],target['lon']]
             distance = int(target['miles'])
+            alt = int(target['alt_baro'])
             loggit("Dump ICOA {} distance {}, {}".format(icoa,distance, json.dumps(target,indent=4)))
             for plane in all_planes:
                 this_plane = all_planes[plane]
@@ -193,8 +195,13 @@ def dump_the_planes(icoa):
                 if 'lat' in this_plane and 'lon' in this_plane:
                     ll_this = [ this_plane['lat'],this_plane['lon']]
                     proximity = Haversine(ll_target,ll_this).nm
-                if proximity < 20:
-                    txt = " {}: priximity : {} ".format(icoa,proximity)
+
+                hd=1001
+                if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
+                    hd = abs(alt - int(this_plane['alt_baro']))
+
+                if proximity < 20 and hd < 1000:
+                    txt = " {}: proximity : {:.2f} ".format(icoa,proximity)
                     for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
                         if item in this_plane:
                             txt = txt + " {}:{}".format(item,this_plane[item])

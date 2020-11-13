@@ -44,7 +44,7 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global planes
         global lock
-        print("GET python request {} {}".format(self.path,self.headers))
+        #print("GET python request {} {}".format(self.path,self.headers))
         self.send_response(200)
         self.send_header("Content-type","text/html")
         self.end_headers()
@@ -189,8 +189,8 @@ def start_webserver():
         thread1 = myThread(1)
         thread1.start()
         print("thread OK")
-    except:
-        print("failed to start thread")
+    except Exception as e:
+        print("failed to start thread {}".format(e))
 
 def update_plane_data(p):
     global planes

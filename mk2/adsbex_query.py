@@ -1,7 +1,6 @@
 
 import ADSBExKey
 import requests
-import json
 from loggit import loggit
 
 s = requests.Session()
@@ -9,7 +8,7 @@ s.headers.update({'Api-Auth':ADSBExKey.ADSB_KEY})
 
 def adsb_lookup(plane):
         URL= "https://adsbexchange.com/api/aircraft/icao/{0}/".format(plane.strip().upper())
-        loggit("lookup {0} online".format(URL))
+        loggit("lookup {0} in adsbexchange".format(URL))
         try:
             r = s.get(url=URL)
         except Exception as e:
@@ -23,7 +22,8 @@ def adsb_lookup(plane):
             if p['reg'] == '':
                 return None
             else:
-                loggit(json.dumps(answer,indent=4))
+                #loggit(json.dumps(answer,indent=4))
+                loggit("Found")
                 try:
                     data = { 'icao' : plane, 'tail' : p['reg'] , 'from' : p['from'], 'to':p['to'] , 'type' :p['type']}
                 except:
