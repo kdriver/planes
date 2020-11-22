@@ -55,8 +55,14 @@ def insert_adsbex_cache(data_tuple):
 
 def call_command(command):
     txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
-    loggit(txt.decode('utf-8'))
-    return txt
+    if isinstance(txt,bytes):
+        val = txt.decode('utf-8')
+    else:
+        val = txt
+
+    loggit(val)
+
+    return val
 
 def init_reference_data():
         global conn
@@ -89,14 +95,17 @@ def update_reference_data():
             loggit(txt)
             try:
                 #conn.close() 
-                print("call wget command ")
+                loggit("call wget command for StandingData")
                 ans = call_command(["/usr/bin/wget","-N","http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz"])
-                print("wget command returned")
+                loggit("wget command returned")
                 if  'Omitting' in ans :
-                    print("No download - so no need to decompress \n")
+                    loggit("No download - so no need to decompress \n")
                 else:
+                    loggit("decompress StandingData")
                     call_command(["gunzip","-f","-k","./StandingData.sqb.gz"])
                 conn = sqlite3.connect('./StandingData.sqb')
+                loggit("Reconnected to StandingData - the route database")
+                
             except Exception as e:
                 print("Complete disaster - cant re open route database {}".format(e))
             txt = "refresh the BaseStation  database %s\n"  % ascii_time()
@@ -116,7 +125,8 @@ def update_reference_data():
             except Exception as e:
                 print("Complete disaster - cant re open Base station database %s " % e)
                 exit()
-            loggit("\nupdates completed\n")
+            loggit("\nupdates completed on {:.2f} seconds\n".format(time.time()-tnow))
+
 
 
 def add_tail_and_type(icoa,plane):

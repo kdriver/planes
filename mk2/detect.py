@@ -189,6 +189,7 @@ def dump_the_planes(icoa):
             distance = int(target['miles'])
             alt = int(target['alt_baro'])
             loggit("Dump ICOA {} distance {}, {}".format(icoa,distance, json.dumps(target,indent=4)))
+            target_time = target['touched']
             for plane in all_planes:
                 this_plane = all_planes[plane]
                 proximity = 100
@@ -205,6 +206,8 @@ def dump_the_planes(icoa):
                     for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
                         if item in this_plane:
                             txt = txt + " {}:{}".format(item,this_plane[item])
+
+                    txt = txt + " tdiff = {:.2f} tn = {}".format((target_time - this_plane['touched']),get_time())
                     loggit(txt)
         else:
             loggit("could not find 'miles' in all_planes")
