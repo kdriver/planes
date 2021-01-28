@@ -1,6 +1,6 @@
 import copy
 from http.server import HTTPServer,BaseHTTPRequestHandler
-
+import json
 import threading
 
 
@@ -41,134 +41,150 @@ def page():
 
 
 class MyHandler(BaseHTTPRequestHandler):
+    def log_request(self,format,*args):
+        return
     def do_GET(self):
         global planes
         global lock
         #print("GET python request {} {}".format(self.path,self.headers))
-        self.send_response(200)
-        self.send_header("Content-type","text/html")
-        self.end_headers()
-        self.wfile.write(b'''<head><style>
-        * {
-          box-sizing: border-box;
-          }
+        if self.path == "/numplanes":
+            #print("/numplanes API ")
+            self.send_response(200)
+            self.send_header("Content-type","application/json")
+            self.end_headers()
+            num_planes = { "planes" : len(planes)}
+            json_resp = json.dumps(num_planes)
+            #print(json_resp + "\n")
+            self.wfile.write(json_resp.encode('utf-8'))
+            return
+            
+        try:
+                self.send_response(200)
+                self.send_header("Content-type","text/html")
+                self.end_headers()
+                self.wfile.write(b'''<head><style>
+                * {
+                  box-sizing: border-box;
+                  }
 
-          #myInput {
-            background-image: url('/css/searchicon.png');
-            background-position: 10px 10px;
-            background-repeat: no-repeat;
-            width: 100%;
-            font-size: 12px;
-            padding: 12px 20px 12px 40px;
-            border: 1px solid #ddd;
-            margin-bottom: 12px;
-            }
+                  #myInput {
+                    background-image: url('/css/searchicon.png');
+                    background-position: 10px 10px;
+                    background-repeat: no-repeat;
+                    width: 100%;
+                    font-size: 12px;
+                    padding: 12px 20px 12px 40px;
+                    border: 1px solid #ddd;
+                    margin-bottom: 12px;
+                    }
 
-            #myTable {
-               border-collapse: collapse;
-               width: 100%;
-               border: 1px solid #ddd;
-               font-size: 14;
-            }
+                    #myTable {
+                       border-collapse: collapse;
+                       width: 100%;
+                       border: 1px solid #ddd;
+                       font-size: 14;
+                    }
 
-            #myTable th, #myTable td {
-                text-align: left;
-                padding: 2px;
-            }
+                    #myTable th, #myTable td {
+                        text-align: left;
+                        padding: 2px;
+                    }
 
-            #myTable tr {
-               border-bottom: 1px solid #ddd;
-            }
+                    #myTable tr {
+                       border-bottom: 1px solid #ddd;
+                    }
 
-            #myTable tr.header, #myTable tr:hover {
-                  background-color: #f1f1f1;
-            }
+                    #myTable tr.header, #myTable tr:hover {
+                          background-color: #f1f1f1;
+                    }
 
-            </style></head><body>''')
+                    </style></head><body>''')
 
-        self.wfile.write(b'''
-<script>
-var lessormore = 1;
+                self.wfile.write(b'''
+        <script>
+        var lessormore = 1;
 
-function myFunction() {
-          var input, filter, table, tr, td, i, txtValue;
-          input = document.getElementById("myInput");
-          filter = input.value.toUpperCase();
-          table = document.getElementById("myTable");
-          tr = table.getElementsByTagName("tr");
-          for (i = 1; i < tr.length; i++) {
-               txt = ""
-               for (j=0;j<9;j++){
-                       td = tr[i].getElementsByTagName("td")[j];
-                       if (td) {
-                          txtValue = td.textContent || td.innerText;
-                          txt = txt + " " +  txtValue
-                        }
-               }
-               if (txt.toUpperCase().indexOf(filter) > -1) {
-                       tr[i].style.display = "";
-               } else {
-                       tr[i].style.display = "none";
-               }
-             }       
-             sortTable();
-           }
-function sortTable() {
-    var table, rows, switching, i, x, y, shouldSwitch;
-    table = document.getElementById("myTable");
-    if ( lessormore == 1 )
-        lessormore = 0;
-    else 
-        lessormore = 1;
+        function myFunction() {
+                  var input, filter, table, tr, td, i, txtValue;
+                  input = document.getElementById("myInput");
+                  filter = input.value.toUpperCase();
+                  table = document.getElementById("myTable");
+                  tr = table.getElementsByTagName("tr");
+                  for (i = 1; i < tr.length; i++) {
+                       txt = ""
+                       for (j=0;j<9;j++){
+                               td = tr[i].getElementsByTagName("td")[j];
+                               if (td) {
+                                  txtValue = td.textContent || td.innerText;
+                                  txt = txt + " " +  txtValue
+                                }
+                       }
+                       if (txt.toUpperCase().indexOf(filter) > -1) {
+                               tr[i].style.display = "";
+                       } else {
+                               tr[i].style.display = "none";
+                       }
+                     }       
+                     sortTable();
+                   }
+        function sortTable() {
+            var table, rows, switching, i, x, y, shouldSwitch;
+            table = document.getElementById("myTable");
+            if ( lessormore == 1 )
+                lessormore = 0;
+            else 
+                lessormore = 1;
 
-    switching = true;
-    /* Make a loop that will continue until
-    no switching has been done: */
-    while (switching) {
-    // Start by saying: no switching is done:
-        switching = false;
-        rows = table.rows;
-        /* Loop through all table rows (except the first, which contains table headers): */
-        for (i = 1; i < (rows.length - 1); i++) {
-            // Start by saying there should be no switching:
-            shouldSwitch = false;
-            /* Get the two elements you want to compare, one from current row and one from the next: */
-            x = rows[i].getElementsByTagName("TD")[3];
-            y = rows[i + 1].getElementsByTagName("TD")[3];
-            // Check if the two rows should switch place:
-            a= parseFloat(x.innerHTML.toLowerCase())
-            b= parseFloat(y.innerHTML.toLowerCase())
-            if ( lessormore == 1 ){
-                if ( a < b ) {
-                    // If so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
-                }
-            }
-            else {
-                if ( a > b ){
-                    // If so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
-                }
-            }
-
-        }
-        if (shouldSwitch) {
-            /* If a switch has been marked, make the switch and mark that a switch has been done: */
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
             switching = true;
-        }
-    }
-}
-</script>''')
-         
+            /* Make a loop that will continue until
+            no switching has been done: */
+            while (switching) {
+            // Start by saying: no switching is done:
+                switching = false;
+                rows = table.rows;
+                /* Loop through all table rows (except the first, which contains table headers): */
+                for (i = 1; i < (rows.length - 1); i++) {
+                    // Start by saying there should be no switching:
+                    shouldSwitch = false;
+                    /* Get the two elements you want to compare, one from current row and one from the next: */
+                    x = rows[i].getElementsByTagName("TD")[3];
+                    y = rows[i + 1].getElementsByTagName("TD")[3];
+                    // Check if the two rows should switch place:
+                    a= parseFloat(x.innerHTML.toLowerCase())
+                    b= parseFloat(y.innerHTML.toLowerCase())
+                    if ( lessormore == 1 ){
+                        if ( a < b ) {
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                    else {
+                        if ( a > b ){
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
 
-        the_lock.acquire()
-        self.wfile.write(bytes("num planes " + str(len(planes)),'utf-8'))
-        self.wfile.write(bytes(page(),'utf-8'))
-        the_lock.release()
-        self.wfile.write(b'</body>')
+                }
+                if (shouldSwitch) {
+                    /* If a switch has been marked, make the switch and mark that a switch has been done: */
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                }
+            }
+        }
+        </script>''')
+                 
+
+                the_lock.acquire()
+                self.wfile.write(bytes("num planes " + str(len(planes)),'utf-8'))
+                self.wfile.write(bytes(page(),'utf-8'))
+                the_lock.release()
+                self.wfile.write(b'</body>')
+        except Exception as e:
+            loggit("Error serving web page {}".format(e))
         return
 
 

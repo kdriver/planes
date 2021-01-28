@@ -100,11 +100,14 @@ def nearest_point(plane):
             m = int(plane['miles'])
 
             if 'alt_baro' in plane:
-                h = math.floor(int(plane['alt_baro'])/100)
-                if h > 9:
-                    txt = txt + " at " + str(h/10) + " thousand feet"
-                else:
-                    txt = txt + " at " + str(h) + " hundred feet"
+                if plane['alt_baro'] != 'ground':
+                    h = math.floor(int(plane['alt_baro'])/100)
+                    if h > 9:
+                        txt = txt + " at " + str(h/10) + " thousand feet"
+                    else:
+                        txt = txt + " at " + str(h) + " hundred feet"
+            else:
+                txt = txt + " on ground"
 
             txt = txt + " distance {:>1.1f} miles".format(m)
             say.speak(txt)
