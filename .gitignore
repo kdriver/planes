@@ -104,3 +104,8 @@ venv.bak/
 .mypy_cache/
 monitor.txt
 *.sqb
+*.gz
+*tsv
+*csv
+*.txt
+*.ico

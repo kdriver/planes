@@ -13,7 +13,7 @@ def attach_sqldb():
         cur = sql_conn.cursor()
         cur.execute(create_text)
         sql_conn.commit()
-        print("conneted to sqlite planes.sqb database ok\n")
+        print("connected to sqlite planes.sqb database ok\n")
     except Exception as e:
         print(e)
 
