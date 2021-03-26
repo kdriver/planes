@@ -1,0 +1,2 @@
+grep proximity output.txt | grep tail | sed -E 's/(~[A-F0-9]*)(.*)(icoa:[A-F0-9]*)(.*)(tail:[0-9A-Z-]*)(.*)(tn =.*)/\1 \3 \5 ,\"\7\"/' | sed -e 's/icoa:/,/' -e 's/tail:/,/' -e 's/tn =//' | sed -e 's/^ //' | sort 
+
