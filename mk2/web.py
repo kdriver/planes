@@ -10,7 +10,7 @@ the_lock = threading.Lock()
 def page():
     global planes
     txt = '<input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names.." title="Type in a name">'
-    txt = txt + '<p><button onclick="sortTable()">Sort</button></p>'
+    txt = txt + '<p><button onclick="sortTable(3)">Sort Closest pass</button><button onclick="sortTable(4)">Sort current dist</button></p>'
     txt = txt + '<table id="myTable">'
     txt = txt + '<tr class="header">'
     txt = txt + '<th> ICOA </th>'
@@ -127,7 +127,7 @@ class MyHandler(BaseHTTPRequestHandler):
                      }       
                      sortTable();
                    }
-        function sortTable() {
+        function sortTable(col) {
             var table, rows, switching, i, x, y, shouldSwitch;
             table = document.getElementById("myTable");
             if ( lessormore == 1 )
@@ -147,11 +147,15 @@ class MyHandler(BaseHTTPRequestHandler):
                     // Start by saying there should be no switching:
                     shouldSwitch = false;
                     /* Get the two elements you want to compare, one from current row and one from the next: */
-                    x = rows[i].getElementsByTagName("TD")[3];
-                    y = rows[i + 1].getElementsByTagName("TD")[3];
+                    x = rows[i].getElementsByTagName("TD")[col];
+                    y = rows[i + 1].getElementsByTagName("TD")[col];
                     // Check if the two rows should switch place:
-                    a= parseFloat(x.innerHTML.toLowerCase())
-                    b= parseFloat(y.innerHTML.toLowerCase())
+                    a= parseFloat(x.innerHTML.toLowerCase());
+                    b= parseFloat(y.innerHTML.toLowerCase());
+                    if ( isNaN(a))
+                        a = 1000;
+                    if ( isNaN(b) )
+                        b = 1000;
                     if ( lessormore == 1 ){
                         if ( a < b ) {
                             // If so, mark as a switch and break the loop:

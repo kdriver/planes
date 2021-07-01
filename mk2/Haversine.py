@@ -1,4 +1,6 @@
 import math
+from math import radians, cos, sin, asin, sqrt
+
 
 class Haversine:
     '''
@@ -11,21 +13,32 @@ class Haversine:
     def __init__(self,coord1,coord2):
         lon1,lat1=coord1
         lon2,lat2=coord2
+        self.miles=h3(lon1,lat1,lon2,lat2)
+        #print("miles {}".format(self.miles))
+        return
 
-        R=6371000                               # radius of Earth in meters
-        phi_1=math.radians(lat1)
-        phi_2=math.radians(lat2)
 
-        delta_phi=math.radians(lat2-lat1)
-        delta_lambda=math.radians(lon2-lon1)
+from math import radians, cos, sin, asin, sqrt
 
-        a=math.sin(delta_phi/2.0)**2+\
-           math.cos(phi_1)*math.cos(phi_2)*\
-           math.sin(delta_lambda/2.0)**2
-        c=2*math.atan2(math.sqrt(a),math.sqrt(1-a))
+def h3( lon1,lat1,lon2,lat2 ):
+      R = 3959.87433 # this is in miles.  For Earth radius in kilometers use 6372.8 km
+      dLat = radians(lat2 - lat1)
+      dLon = radians(lon2 - lon1)
+      lat1 = radians(lat1)
+      lat2 = radians(lat2)
 
-        self.meters=R*c                         # output distance in meters
-        self.km=self.meters/1000.0              # output distance in kilometers
-        self.miles=self.meters*0.000621371      # output distance in miles
-        self.feet=self.miles*5280               # output distance in feet
-        self.nm=self.miles/1.15               # output distance in feet
+      a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
+      c = 2*asin(sqrt(a))
+
+      return R * c
+
+def test():
+    home=[ -1.9591988377888176,50.835736602072664]
+    p1 = [-1.37825,50.749155]
+    h = Haversine(home,p1).miles
+    print(h)
+    d = h3(home[0],home[1],p1[0],p1[1])
+    print(d)
+
+if __name__ == "__main__":
+    test()

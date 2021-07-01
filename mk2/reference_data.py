@@ -49,6 +49,7 @@ def insert_adsbex_cache(data_tuple):
         cur = adsbex_cache.cursor()
         cur.execute("INSERT INTO cache(%s) VALUES (?,?,?,?)" % cols,data_tuple)
         adsbex_cache.commit()
+        loggit("cached in adsb_cache")
     except Exception as e:
         print("insert into adsbex exception {}".format(e))
 

@@ -10,6 +10,7 @@ from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
 from loggit import GREEN_TEXT as GREEN_TEXT
 from loggit import YELLOW_TEXT as YELLOW_TEXT
+from loggit import CYAN_TEXT as CYAN_TEXT
 #from loggit import RED_TEXT as RED_TEXT
 from Haversine import Haversine
 from reference_data import update_reference_data
@@ -18,7 +19,9 @@ from reference_data import add_reference_data
 from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
+from kml import kml_doc
 
+# lon , lat
 home=[-1.95917,50.83583]
 all_planes={}
 TWEET_RADIUS=2.0
@@ -77,6 +80,17 @@ def nearest_point(plane):
     except:
         pass
 
+    name=''
+    if 'tail' in plane:
+        name=plane['tail']
+    else:
+        name='unknown'
+    kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, name,plane['closest_miles'])
+    #redo_miles = Haversine()
+    with open("kmls/{}.kml".format(name),"w") as f:
+        f.write(kml_text)
+        f.close()
+
     if 'expired' in plane:
         pd = pd + ' expired '
 
@@ -117,64 +131,72 @@ def nearest_point(plane):
                 if 'DA42' in plane['plane']: 
                     loggit(pd,BOTH,YELLOW_TEXT)
                 else:
-                    loggit(pd,BOTH)
+                    loggit(pd,BOTH,CYAN_TEXT)
     else:
         pd = pd + " " + json.dumps(plane)
-        loggit(pd,BOTH)
+        loggit(pd,BOTH,CYAN_TEXT)
 
 def read_planes():
-    with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
         try:
-            data = json.load(f)
-        except:
-            print("error - can't open aircraft.json")
-
-        global all_planes
-        planes   = data["aircraft"]
-        #num_planes = len(planes)
-        #print("num planes {}".format(num_planes))
-
-        for plane in planes:
-            start_miles = 1000
-            miles = start_miles
-            try:
-                icoa = plane["hex"].strip().upper()
-                if icoa not in all_planes:
-                    all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles }
-                this_plane = all_planes[icoa]
-                this_plane['touched'] = time.time()
-            except Exception as e:
-                print("no icoa icao code in plane record {} ".format(e))
-                continue
-
-            for  attr in ['lon','lat','flight','track','alt_baro']:
-                if attr in plane:
-                    this_plane[attr] = plane[attr]
-
-            if 'lat' in this_plane and 'lon' in this_plane:
+            with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
                 try:
-                    miles = Haversine([this_plane["lon"],this_plane["lat"]],home).nm
-                    this_plane['current_miles'] = miles
-                    if miles < this_plane['miles']:
-                        this_plane['closest_lat'] = float(this_plane['lat'])
-                        this_plane['closest_lon'] = float(this_plane['lon'])
-                        this_plane['closest_miles'] = miles
-                        if this_plane['miles'] == start_miles:
-                            loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
-                        if 'reported' in this_plane:
-                            del this_plane['reported']
-                        this_plane['miles'] = miles
+                    data = json.load(f)
+                except:
+                    print("error - can't open aircraft.json")
 
-                except Exception as e:
-                    print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
-                    continue
+                global all_planes
+                planes   = data["aircraft"]
+                #num_planes = len(planes)
+                #print("num planes {}".format(num_planes))
 
-            if  miles < 200 and 'enriched' not in this_plane:
-                enrich(icoa,this_plane)
+                for plane in planes:
+                    start_miles = 1000
+                    miles = start_miles
+                    try:
+                        icoa = plane["hex"].strip().upper()
+                        if icoa not in all_planes:
+                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles }
+                        this_plane = all_planes[icoa]
+                        this_plane['touched'] = time.time()
+                    except Exception as e:
+                        print("no icoa icao code in plane record {} ".format(e))
+                        continue
 
-            if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
-                if 'reported' not in this_plane and this_plane['miles'] < 50:
-                    nearest_point(this_plane)
+                    for  attr in ['lon','lat','flight','track','alt_baro']:
+                        if attr in plane:
+                            this_plane[attr] = plane[attr]
+
+                    if 'lat' in this_plane and 'lon' in this_plane:
+                        try:
+                            miles = Haversine([this_plane["lon"],this_plane["lat"]],home).miles
+                            try:
+                                if this_plane['flight'] == 'GCTSD':
+                                    print("GTSD miles {}".format(miles))
+                            except:
+                                pass
+                            this_plane['current_miles'] = miles
+                            if miles < this_plane['miles']:
+                                this_plane['closest_lat'] = float(this_plane['lat'])
+                                this_plane['closest_lon'] = float(this_plane['lon'])
+                                this_plane['closest_miles'] = miles
+                                if this_plane['miles'] == start_miles:
+                                    loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                                if 'reported' in this_plane:
+                                    del this_plane['reported']
+                                this_plane['miles'] = miles
+
+                        except Exception as e:
+                            print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
+                            continue
+
+                    if  miles < 200 and 'enriched' not in this_plane:
+                        enrich(icoa,this_plane)
+
+                    if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
+                        if 'reported' not in this_plane and this_plane['miles'] < 50:
+                            nearest_point(this_plane)
+        except Exception as e:
+                print(" error in read_planes {}\n".format(e))
 
 
 init_reference_data()
@@ -198,7 +220,7 @@ def dump_the_planes(icoa):
                 proximity = 100
                 if 'lat' in this_plane and 'lon' in this_plane:
                     ll_this = [ this_plane['lat'],this_plane['lon']]
-                    proximity = Haversine(ll_target,ll_this).nm
+                    proximity = Haversine(ll_target,ll_this).miles
 
                 hd=1001
                 if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
