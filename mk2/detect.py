@@ -20,6 +20,7 @@ from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
 from kml import kml_doc
+from my_queue import my_queue
 
 # lon , lat
 home=[-1.95917,50.83583]
@@ -132,9 +133,11 @@ def nearest_point(plane):
                     loggit(pd,BOTH,YELLOW_TEXT)
                 else:
                     loggit(pd,BOTH,CYAN_TEXT)
+                    loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
     else:
         pd = pd + " " + json.dumps(plane)
         loggit(pd,BOTH,CYAN_TEXT)
+        loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
 
 def read_planes():
         try:
@@ -155,9 +158,10 @@ def read_planes():
                     try:
                         icoa = plane["hex"].strip().upper()
                         if icoa not in all_planes:
-                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles }
+                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(50)}
                         this_plane = all_planes[icoa]
                         this_plane['touched'] = time.time()
+                    
                     except Exception as e:
                         print("no icoa icao code in plane record {} ".format(e))
                         continue
@@ -169,12 +173,8 @@ def read_planes():
                     if 'lat' in this_plane and 'lon' in this_plane:
                         try:
                             miles = Haversine([this_plane["lon"],this_plane["lat"]],home).miles
-                            try:
-                                if this_plane['flight'] == 'GCTSD':
-                                    print("GTSD miles {}".format(miles))
-                            except:
-                                pass
                             this_plane['current_miles'] = miles
+                            this_plane['tracks'].add({'miles':miles,"lon":this_plane["lon"],"lat":this_plane["lat"]})
                             if miles < this_plane['miles']:
                                 this_plane['closest_lat'] = float(this_plane['lat'])
                                 this_plane['closest_lon'] = float(this_plane['lon'])
@@ -210,6 +210,11 @@ def dump_the_planes(icoa):
     if icoa in all_planes:
         target = all_planes[icoa]
         if 'miles' in target:
+
+            if 'lat' not in target or  'lon' not in target:
+                loggit("target plane does not have both lat and lon - exit")
+                return
+
             ll_target = [target['lat'],target['lon']]
             distance = int(target['miles'])
             alt = int(target['alt_baro'])

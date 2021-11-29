@@ -4,15 +4,31 @@ import sqlite3
 from datetime import datetime
 from loggit import loggit
 
+counter=0
+start_time=datetime.now()
+
 def add_to_unknown_planes(icoa):
+    global counter
+    if '~' in icoa:
+        print("~ detected in icoa - dont lookup in blackswan" )
+        return(None,None)
+
     try:
         print('Lookup in blackswan')
+        counter = counter + 1
         r = requests.get('https://blackswan.ch/aircraft/{}'.format(icoa))
         page= r.text
         soup = BeautifulSoup(page,"html.parser")
         reg = soup.find("td" ,attrs={"data-target" :"reg"})
         #model = soup.find("td" ,attrs={"data-target" :"model"}).text
         model = soup.find("td" ,attrs={"data-target" :"type"})
+        instant = datetime.now()
+        the_diff = instant - start_time
+        in_seconds = the_diff.total_seconds()
+        in_days = in_seconds/(60*60*24)
+        requests_per_day = counter/in_days
+        print("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
+
         if reg == None or model == None:
             loggit("blackswan has no data for {}".format(icoa))
             return(None,None)

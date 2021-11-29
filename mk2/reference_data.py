@@ -80,8 +80,11 @@ def init_reference_data():
         modes_map={}
         counter=0
         for row in read_tsv:
-            modes_map[row[2]] = row[4]
-            counter=counter+1
+            try:
+                modes_map[row[2]] = row[4]
+                counter=counter+1
+            except:
+                pass
             if not(counter % 1000):
                 print(".",end='',flush=True)
                 
@@ -178,7 +181,7 @@ def add_tail_and_type(icoa,plane):
                 ptype = txt[1]
                 conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icoa = '{}'".format(the_hex))
                 conn_unknown.commit()
-                #loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),BOTH)
+                loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),TO_FILE)
             conn_unknown.close()
         except Exception as e:
             loggit("problem reading unknown_planes database {}".format(e))

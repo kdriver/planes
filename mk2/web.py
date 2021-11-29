@@ -112,7 +112,7 @@ class MyHandler(BaseHTTPRequestHandler):
                   tr = table.getElementsByTagName("tr");
                   for (i = 1; i < tr.length; i++) {
                        txt = ""
-                       for (j=0;j<9;j++){
+                       for (j=0;j<10;j++){
                                td = tr[i].getElementsByTagName("td")[j];
                                if (td) {
                                   txtValue = td.textContent || td.innerText;
