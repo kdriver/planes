@@ -33,8 +33,8 @@ dump_icoa = None
 dump_time = 0
 
 
-def get_time():
-    answer = time.asctime(time.localtime(time.time()))
+def get_time(clock=time.time()):
+    answer = time.asctime(time.localtime(clock))
     return answer
 
 def enrich(icoa,plane):
@@ -67,7 +67,7 @@ def get_place(clat,clon):
             
     
 def nearest_point(plane):
-    pd = "{} -> nearest   {} ".format(get_time(),plane['icoa'])
+    pd = "{} -> nearest   {} ".format(get_time(plane["closest_time"]),plane['icoa'])
     for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
         if item in plane:
             if item in {'closest_miles','track'}:
@@ -86,7 +86,7 @@ def nearest_point(plane):
         name=plane['tail']
     else:
         name='unknown'
-    kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, name,plane['closest_miles'])
+    kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, plane["alt_baro"],name,plane['closest_miles'],plane["tracks"])
     #redo_miles = Haversine()
     with open("kmls/{}.kml".format(name),"w") as f:
         f.write(kml_text)
@@ -133,11 +133,11 @@ def nearest_point(plane):
                     loggit(pd,BOTH,YELLOW_TEXT)
                 else:
                     loggit(pd,BOTH,CYAN_TEXT)
-                    loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+                    #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
     else:
         pd = pd + " " + json.dumps(plane)
         loggit(pd,BOTH,CYAN_TEXT)
-        loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+        #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
 
 def read_planes():
         try:
@@ -179,6 +179,7 @@ def read_planes():
                                 this_plane['closest_lat'] = float(this_plane['lat'])
                                 this_plane['closest_lon'] = float(this_plane['lon'])
                                 this_plane['closest_miles'] = miles
+                                this_plane["closest_time"] = time.time()
                                 if this_plane['miles'] == start_miles:
                                     loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
                                 if 'reported' in this_plane:

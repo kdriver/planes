@@ -19,19 +19,23 @@ text = """<?xml version='1.0' encoding='UTF-8'?>
     </Placemark>
     <Placemark>
 
-    </Placemark><LineString>
+    <LineString>
+    <extrude>1</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>absolute</altitudeMode>
     <coordinates>
     {}
     </coordinates>
     </LineString>
+    </Placemark>
   </Folder>
 </kml>
 """
 
-def kml_doc(lon1,lat1,lon2,lat2,name,dist,tracks):
+def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
     coords = ""
-    for track in tracks:
-      cline = "{},{},0".format(track["lat"],track["lon"])
+    for track in tracks.get_values():
+      cline = "{},{},{}".format(track["lon"],track["lat"],alt)
       coords = coords + cline +  "\n"
 
     return text.format(name,dist,lon1,lat1,lon2,lat2,coords)
