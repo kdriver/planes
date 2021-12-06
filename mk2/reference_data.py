@@ -235,3 +235,7 @@ def add_reference_data(icoa,plane):
     if 'route' not in plane:
         add_route(icoa,plane)
     return result
+
+if __name__ == "__main__":
+    last_updated = time.time() - ( 2*interval)
+    update_reference_data()
