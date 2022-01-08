@@ -35,7 +35,7 @@ text = """<?xml version='1.0' encoding='UTF-8'?>
 def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
     coords = ""
     for track in tracks.get_values():
-      cline = "{},{},{}".format(track["lon"],track["lat"],alt)
+      cline = "{},{},{}".format(track["lon"],track["lat"],track["alt"])
       coords = coords + cline +  "\n"
 
     return text.format(name,dist,lon1,lat1,lon2,lat2,coords)

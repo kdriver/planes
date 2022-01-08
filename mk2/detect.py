@@ -86,6 +86,10 @@ def nearest_point(plane):
         name=plane['tail']
     else:
         name='unknown'
+
+    if 'alt_baro' not in plane:
+        plane["alt_baro"] = "0"
+
     kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, plane["alt_baro"],name,plane['closest_miles'],plane["tracks"])
     #redo_miles = Haversine()
     with open("kmls/{}.kml".format(name),"w") as f:
@@ -158,7 +162,7 @@ def read_planes():
                     try:
                         icoa = plane["hex"].strip().upper()
                         if icoa not in all_planes:
-                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(50)}
+                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(500)}
                         this_plane = all_planes[icoa]
                         this_plane['touched'] = time.time()
                     
@@ -174,7 +178,7 @@ def read_planes():
                         try:
                             miles = Haversine([this_plane["lon"],this_plane["lat"]],home).miles
                             this_plane['current_miles'] = miles
-                            this_plane['tracks'].add({'miles':miles,"lon":this_plane["lon"],"lat":this_plane["lat"]})
+                            this_plane['tracks'].add({'miles':miles,"lon":this_plane["lon"],"lat":this_plane["lat"],"alt":this_plane["alt_baro"]})
                             if miles < this_plane['miles']:
                                 this_plane['closest_lat'] = float(this_plane['lat'])
                                 this_plane['closest_lon'] = float(this_plane['lon'])
@@ -200,11 +204,7 @@ def read_planes():
                 print(" error in read_planes {}\n".format(e))
 
 
-init_reference_data()
-update_reference_data()
-start_webserver()
-last_tick = 0
-sqldb.attach_sqldb()
+
 
 def dump_the_planes(icoa):
     loggit("Dump planes with similar distance to {}".format(icoa))
@@ -245,6 +245,12 @@ def dump_the_planes(icoa):
     else:
         loggit("could not find {} in all_planes".format(icoa))
 
+
+init_reference_data()
+update_reference_data()
+start_webserver()
+last_tick = 0
+sqldb.attach_sqldb()
 
 while 1:
     read_planes()
