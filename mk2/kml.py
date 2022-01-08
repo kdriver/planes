@@ -43,6 +43,6 @@ def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
 
 if __name__ == "__main__":
     home=[ -1.9591988377888176,50.835736602072664]
-    p1 = [-2.0079,50.814423]
+    p1 = [-2.00790,50.814423]
     with open("test.kml","w") as f:
         f.write(kml_doc(home[0],home[1],p1[0],p1[1],'tflight',15.6))
