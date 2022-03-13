@@ -1,0 +1,1 @@
+grep -a "\~" output.txt | grep tail | grep -v could |  sed -e 's/ tdif.*//' -e 's/.*\~/hex:\~/' -e 's/proximity : /proximity:/' -e 's/ /,/g' -e 's/,,/,/g' -e 's/^/\{&/' -e 's/$/&\}/' >  tilda.json
