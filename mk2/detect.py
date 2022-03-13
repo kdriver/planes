@@ -20,11 +20,15 @@ from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
 from kml import kml_doc
+from kml import write_kmz
 from my_queue import my_queue
+from my_queue import  INFINATE as INFINATE
+import zipfile
 
 # lon , lat
 home=[-1.95917,50.83583]
 all_planes={}
+# planes with closest approach to home of less that TWEET_RADIUS miles will be tweeted
 TWEET_RADIUS=2.0
 
 osm = requests.Session()
@@ -92,9 +96,12 @@ def nearest_point(plane):
 
     kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, plane["alt_baro"],name,plane['closest_miles'],plane["tracks"])
     #redo_miles = Haversine()
-    with open("kmls/{}.kml".format(name),"w") as f:
-        f.write(kml_text)
-        f.close()
+    #with open("kmls/{}.kml".format(name),"w") as f:
+    #    f.write(kml_text)
+    #    f.close()
+    with zipfile.ZipFile("kmls/{}.kmz".format(name),"w") as zf:
+        zf.writestr("{}.kml".format(name),kml_text)
+        zf.close()
 
     if 'expired' in plane:
         pd = pd + ' expired '
@@ -162,19 +169,19 @@ def read_planes():
                     try:
                         icoa = plane["hex"].strip().upper()
                         if icoa not in all_planes:
-                            all_planes[icoa] = { "icoa" : icoa , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(500)}
+                            all_planes[icoa] = { "icoa" : icoa , 'max_miles' : 0.0 , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(INFINATE)}
                         this_plane = all_planes[icoa]
                         this_plane['touched'] = time.time()
                     
                     except Exception as e:
-                        print("no icoa icao code in plane record {} ".format(e))
+                        print("no icoa  code in plane record {} ".format(e))
                         continue
 
                     for  attr in ['lon','lat','flight','track','alt_baro']:
                         if attr in plane:
                             this_plane[attr] = plane[attr]
 
-                    if 'lat' in this_plane and 'lon' in this_plane:
+                    if 'lat' in this_plane and 'lon' in this_plane and 'alt_baro' in this_plane:
                         try:
                             miles = Haversine([this_plane["lon"],this_plane["lat"]],home).miles
                             this_plane['current_miles'] = miles
@@ -182,13 +189,19 @@ def read_planes():
                             if miles < this_plane['miles']:
                                 this_plane['closest_lat'] = float(this_plane['lat'])
                                 this_plane['closest_lon'] = float(this_plane['lon'])
+                                this_plane['closest_alt'] = this_plane["alt_baro"]
                                 this_plane['closest_miles'] = miles
                                 this_plane["closest_time"] = time.time()
                                 if this_plane['miles'] == start_miles:
-                                    loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                                    #loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                                    pass
                                 if 'reported' in this_plane:
                                     del this_plane['reported']
                                 this_plane['miles'] = miles
+                            if miles > this_plane['max_miles']:
+                                this_plane['max_miles'] = miles
+                                this_plane['max_lon']   = this_plane['lon']
+                                this_plane['max_lat']   = this_plane['lat'] 
 
                         except Exception as e:
                             print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
@@ -198,7 +211,7 @@ def read_planes():
                         enrich(icoa,this_plane)
 
                     if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
-                        if 'reported' not in this_plane and this_plane['miles'] < 50:
+                        if 'reported' not in this_plane and this_plane['closest_miles'] < 50:
                             nearest_point(this_plane)
         except Exception as e:
                 print(" error in read_planes {}\n".format(e))
@@ -265,6 +278,9 @@ while 1:
         if  'reported' not in p and 'miles' in p and p['miles'] < 50 :
             p['expired'] = 1
             nearest_point(p)
+        write_kmz(home,p)
+        if 'reported' in p:
+            # loggit("deleting {}".format(p['tail']))
         del all_planes[plane]
         #print("delete {}".format(plane))
     update_reference_data() 

@@ -1,5 +1,7 @@
 import json
 
+INFINATE = 0
+
 #inherit from dict to make class serialisable
 class my_queue(dict):
     def __init__(self,size_q):
@@ -12,8 +14,9 @@ class my_queue(dict):
     #         sort_keys=True, indent=4)
 
     def add(self,element):
-        if len(self.q) >= self.size_q:
-            del self.q[-1]
+        if self.size_q != INFINATE:
+            if  len(self.q) >= self.size_q:
+                del self.q[-1]
         self.q.insert(0,element)
 
     def get_values(self):

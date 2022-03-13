@@ -146,7 +146,7 @@ def add_tail_and_type(icoa,plane):
         if txt != None:
             if  txt[0] != None:
                 reg = "%s" % txt[0]
-                loggit("{} got tail {} from Basestation".format(the_hex,reg),TO_FILE)
+                #loggit("{} got tail {} from Basestation".format(the_hex,reg),TO_FILE)
             if txt[1] != None:
                 plane['Manufacturer'] = "{}".format(txt[1])
             if txt[2] != None:
