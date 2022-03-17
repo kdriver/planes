@@ -47,11 +47,11 @@ splat_text = """<?xml version='1.0' encoding='UTF-8'?>
     </Style>
     <Style id="YGP">
       <LineStyle>
-      <color>7f00ffff</color>
+      <color>{}</color>
       <width>4</width>
       </LineStyle>
       <PolyStyle>
-      <color>7f00ff00</color>
+      <color>{}</color>
       </PolyStyle>
     </Style>
 
@@ -70,6 +70,8 @@ splat_text = """<?xml version='1.0' encoding='UTF-8'?>
 </kml>
 """
 
+red='7f0000ff'
+
 def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
     coords = ""
     for track in tracks.get_values():
@@ -78,13 +80,13 @@ def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
 
     return text.format(name,dist,lon1,lat1,lon2,lat2,coords)
 
-def splat_doc(radar_points,name):
+def splat_doc(radar_points,name,line_col,face_col):
     coords = ""
     for point in radar_points:
       cline = "{},{},{}".format(point[1],point[0],point[2])
       coords = coords + cline +"\n"
     
-    doc_text = splat_text.format(coords)
+    doc_text = splat_text.format(line_col,face_col, coords)
     zf = zipfile.ZipFile("splat_{}.kmz".format(name),"w")
     zf.writestr("{}.kml".format(name),doc_text)
     zf.close()
