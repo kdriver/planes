@@ -1,6 +1,0 @@
-.print "Flight"
-select DISTINCT flight, count( flight) as num, hex from planes group by flight order by num desc limit 10;
-.print "Tail"
-select DISTINCT tail, count( tail) as num from planes group by tail order by num desc limit 10;
-.print "hex"
-select DISTINCT hex, count( hex) as num from planes group by hex order by num desc limit 10;
