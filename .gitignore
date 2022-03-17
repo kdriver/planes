@@ -6,6 +6,8 @@ __pycache__/
 kmls/
 *.kml
 
+.DS_Store
+
 # C extensions
 *.so
 
@@ -112,3 +114,4 @@ monitor.txt
 *csv
 *.txt
 *.ico
+mk2/.DS_Store
