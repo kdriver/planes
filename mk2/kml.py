@@ -36,6 +36,40 @@ text = """<?xml version='1.0' encoding='UTF-8'?>
 </kml>
 """
 
+splat_text = """<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns:ns="http://earth.google.com/kml/2.0">
+  <Folder>
+    <Style id="kdd">
+      <LineStyle>
+        <color>ff00f0ff</color>
+        <width>2</width>
+      </LineStyle>
+    </Style>
+    <Style id="YGP">
+      <LineStyle>
+      <color>7f00ffff</color>
+      <width>4</width>
+      </LineStyle>
+      <PolyStyle>
+      <color>7f00ff00</color>
+      </PolyStyle>
+    </Style>
+
+    <Placemark>
+    <styleUrl>#YGP</styleUrl>
+    <LineString>
+    <extrude>1</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>absolute</altitudeMode>
+    <coordinates>
+    {}
+    </coordinates>
+    </LineString>
+    </Placemark>
+  </Folder>
+</kml>
+"""
+
 def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
     coords = ""
     for track in tracks.get_values():
@@ -43,7 +77,19 @@ def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
       coords = coords + cline +  "\n"
 
     return text.format(name,dist,lon1,lat1,lon2,lat2,coords)
-  
+
+def splat_doc(radar_points,name):
+    coords = ""
+    for point in radar_points:
+      cline = "{},{},{}".format(point[1],point[0],point[2])
+      coords = coords + cline +"\n"
+    
+    doc_text = splat_text.format(coords)
+    zf = zipfile.ZipFile("splat_{}.kmz".format(name),"w")
+    zf.writestr("{}.kml".format(name),doc_text)
+    zf.close()
+
+
 def write_kmz(h,p):
   if 'tail' in p and 'closest_miles' in p and 'reported' in p:
     name = p['tail']

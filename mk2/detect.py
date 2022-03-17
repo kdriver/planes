@@ -5,6 +5,7 @@ import say
 import math
 import requests
 import os
+from vrs import Vrs
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
@@ -183,7 +184,9 @@ def read_planes():
 
                     if 'lat' in this_plane and 'lon' in this_plane and 'alt_baro' in this_plane:
                         try:
-                            miles = Haversine([this_plane["lon"],this_plane["lat"]],home).miles
+                            hv = Haversine(home,[this_plane["lon"],this_plane["lat"]])
+                            miles = hv.miles
+                            bearing = int(hv.bearing)
                             this_plane['current_miles'] = miles
                             this_plane['tracks'].add({'miles':miles,"lon":this_plane["lon"],"lat":this_plane["lat"],"alt":this_plane["alt_baro"]})
                             if miles < this_plane['miles']:
@@ -202,6 +205,8 @@ def read_planes():
                                 this_plane['max_miles'] = miles
                                 this_plane['max_lon']   = this_plane['lon']
                                 this_plane['max_lat']   = this_plane['lat'] 
+                                if isinstance(this_plane["alt_baro"],int):
+                                    vrs.update_entry(bearing,this_plane["lat"],this_plane["lon"],this_plane["alt_baro"],miles,this_plane["icoa"])
 
                         except Exception as e:
                             print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
@@ -239,7 +244,8 @@ def dump_the_planes(icoa):
                 proximity = 100
                 if 'lat' in this_plane and 'lon' in this_plane:
                     ll_this = [ this_plane['lat'],this_plane['lon']]
-                    proximity = Haversine(ll_target,ll_this).miles
+                    hv = Haversine(ll_target,ll_this)
+                    proximity = hv.miles
 
                 hd=1001
                 if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
@@ -264,6 +270,7 @@ update_reference_data()
 start_webserver()
 last_tick = 0
 sqldb.attach_sqldb()
+vrs = Vrs("vrs_data.sqb")
 
 while 1:
     read_planes()
@@ -279,7 +286,6 @@ while 1:
             p['expired'] = 1
             nearest_point(p)
         write_kmz(home,p)
-        if 'reported' in p:
             # loggit("deleting {}".format(p['tail']))
         del all_planes[plane]
         #print("delete {}".format(plane))
