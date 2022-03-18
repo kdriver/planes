@@ -6,6 +6,7 @@ run by python3 detect.py
 API tokens are needed for :
 
 Twitter - scripts will tweet planes that pass closer than 2 miles overhead from home ( as defined in detect.py lat/lon ) 
+
 ADSBExchange  - look up plane data not acvailable locally from databases
 
 Lookups are made to blackswan,Openstreetmap
