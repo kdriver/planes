@@ -252,12 +252,12 @@ def dump_the_planes(icoa):
                     hd = abs(alt - int(this_plane['alt_baro']))
 
                 if proximity < 20 and hd < 1000:
-                    txt = " {}: proximity : {:.2f} ".format(icoa,proximity)
+                    txt = "{" + " hex:{},proximity:{:.2f}".format(icoa,proximity)
                     for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
                         if item in this_plane:
-                            txt = txt + " {}:{}".format(item,this_plane[item])
+                            txt = txt + ",{}:{}".format(item,this_plane[item])
 
-                    txt = txt + " tdiff = {:.2f} tn = {}".format((target_time - this_plane['touched']),get_time())
+                    txt = txt + ",tdiff:{:.2f}, tn:'{}' ".format((target_time - this_plane['touched']),get_time()) + "},"
                     loggit(txt)
         else:
             loggit("could not find 'miles' in all_planes")
@@ -286,11 +286,14 @@ while 1:
             p['expired'] = 1
             nearest_point(p)
         write_kmz(home,p)
-            # loggit("deleting {}".format(p['tail']))
         del all_planes[plane]
-        #print("delete {}".format(plane))
+
+    # check to see if we need to referesh any of the online databases
     update_reference_data() 
+    # update the cache used by the HTTP query to generate a table  ( default port 4443 )
     update_plane_data(all_planes)
+
+    #triggered if we have seen a tilde encoded in the icoa hex
     if dump_planes:
         if now > dump_time:
             dump_the_planes(dump_icoa)

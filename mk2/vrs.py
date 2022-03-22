@@ -45,7 +45,7 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_10k = ?, lon_10k = ?, alt_10k = ? , miles_10k = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated 10k {} from {} to {} , with icoa {}".format(bearing,txt[0],miles,icoa))
+                print("updated 10k {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 
@@ -57,7 +57,7 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_20k = ?, lon_20k = ?, alt_20k = ? , miles_20k = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated 20k {} from {} to {} , with icoa {}".format(bearing,txt[0],miles,icoa))
+                print("updated 20k {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 
@@ -69,7 +69,7 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_max = ?, lon_max = ?, alt_max = ? , miles_max = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated max {} from {} to {} , with icoa {}".format(bearing,txt[0],miles,icoa))
+                print("updated max {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 if __name__ == '__main__':
