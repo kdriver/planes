@@ -1,6 +1,7 @@
 import zipfile
 from my_queue import my_queue
 from loggit import loggit
+from home import home
 
 text = """<?xml version='1.0' encoding='UTF-8'?>
 <kml xmlns:ns="http://earth.google.com/kml/2.0">
@@ -152,7 +153,7 @@ def write_kmz(h,p):
 
 
 if __name__ == "__main__":
-    home=[ -1.9591988377888176,50.835736602072664]
+    
     p1 = [-2.00790,50.814423]
     tracks = my_queue(500)
     tlon = home[0]
