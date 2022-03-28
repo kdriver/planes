@@ -70,6 +70,30 @@ splat_text = """<?xml version='1.0' encoding='UTF-8'?>
 </kml>
 """
 
+vrs_text = """
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+<Document>
+{}
+</Document>
+</kml>
+"""
+# <href>http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png</href>
+placemark_text = """
+<Placemark>
+<Style><IconStyle><Icon>
+  <href>http://maps.google.com/mapfiles/kml/shapes/airports.png</href>
+</Icon></IconStyle></Style>
+<name> {} </name>
+<Point>
+   <extrude>1</extrude>
+   <altitudeMode>absolute</altitudeMode>
+   <coordinates>
+   {}
+   </coordinates>
+</Point>
+</Placemark>
+"""
+
 red='7f0000ff'
 
 def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
@@ -90,6 +114,29 @@ def splat_doc(radar_points,name,line_col,face_col):
     zf = zipfile.ZipFile("splat_{}.kmz".format(name),"w")
     zf.writestr("{}.kml".format(name),doc_text)
     zf.close()
+
+def three_d_vrs(all_planes):
+  placemarks = ""
+  for plane in all_planes:
+    this_plane = all_planes[plane]
+    proceed = True
+    for txt in ['miles','lat','lon','alt_baro','tail']:
+      if txt not in this_plane:
+        proceed = False
+
+    if proceed is True:
+      if this_plane['miles'] < 180:
+        coords = "{},{},{}".format(this_plane['lon'],this_plane['lat'],this_plane['alt_baro'])
+        placemark = placemark_text.format(this_plane['tail'],coords)
+        placemarks = placemarks + placemark 
+    # else:
+    #  print("False {}".format(this_plane['icoa']))
+
+  doc_text = vrs_text.format(placemarks)  
+  zf = zipfile.ZipFile("vrs.kmz","w")
+  zf.writestr("vrs.kml",doc_text)
+  zf.close()
+
 
 
 def write_kmz(h,p):

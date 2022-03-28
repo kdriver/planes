@@ -22,6 +22,7 @@ from web import start_webserver
 from web import update_plane_data
 from kml import kml_doc
 from kml import write_kmz
+from kml import three_d_vrs
 from my_queue import my_queue
 from my_queue import  INFINATE as INFINATE
 import zipfile
@@ -151,6 +152,10 @@ def nearest_point(plane):
         loggit(pd,BOTH,CYAN_TEXT)
         #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
 
+"""
+Read the file produced by dump1090 and cache each plane seen so we can track its position reletive to home
+and check if it gets close.
+"""
 def read_planes():
         try:
             with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
@@ -268,9 +273,10 @@ def dump_the_planes(icoa):
 init_reference_data()
 update_reference_data()
 start_webserver()
-last_tick = 0
+last_tick = time.time()
 sqldb.attach_sqldb()
 vrs = Vrs("vrs_data.sqb")
+
 
 while 1:
     read_planes()
@@ -305,7 +311,11 @@ while 1:
             dump_the_planes(str(s).strip().upper())
         os.remove('check_icoa')
 
-    if ( now - last_tick ) >  60*60*1000 :
+    # every 60 seconds
+    if ( now - last_tick ) >  60 :
         loggit("{} planes being tracked ".format(len(all_planes)))
         last_tick = now
+        #   write out a kml file with all the t planes we can see
+        three_d_vrs(all_planes)
+    
     time.sleep(5)

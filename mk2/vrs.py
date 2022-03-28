@@ -20,16 +20,16 @@ class Vrs():
             # create the template
             for deg in range(0,360,1):
                 self.db.execute("INSERT into vrs({}) VALUES ( ?,?,?,?,?,?,?,?,?,?,?,?,? )".format(cols),(deg,0,0,0,0,0,0,0,0,0,0,0,0))
-            self.db.commit()
+            self.db.commit() 
             print("data populated")
         else:
             print("data exists")
 
     def update_entry(self,bearing,lat,lon,alt,miles,icoa):
-        if alt < 10000:
+        if alt <= 10000:
             self.update_entry_10k(bearing,lat,lon,alt,miles,icoa)
         else:
-            if alt < 20000:
+            if alt <= 20000:
                 self.update_entry_20k(bearing,lat,lon,alt,miles,icoa)
             else:
                 self.update_entry_max(bearing,lat,lon,alt,miles,icoa)
