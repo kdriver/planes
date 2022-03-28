@@ -27,7 +27,7 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
-*.egg
+*.eggls *sqb
 MANIFEST
 
 # PyInstaller
@@ -115,3 +115,18 @@ monitor.txt
 *.txt
 *.ico
 mk2/.DS_Store
+mk2/ADSBExKey.py
+.gitignore
+mk2/adsb_key.py
+mk2/home.py
+mk2/splat_10k_on_shed.kmz
+mk2/vrs_*sqb
+mk2/test.kmz
+mk2/splat.kmz
+mk2/splat_max.kmz
+mk2/splat_max_on_shed.kmz
+mk2/splat_20k.kmz
+mk2/splat_20k_on_shed.kmz
+mk2/splat_10k.kmz
+mk2/vrs.kmz
+git_token

@@ -26,9 +26,9 @@ from kml import three_d_vrs
 from my_queue import my_queue
 from my_queue import  INFINATE as INFINATE
 import zipfile
+from home import home
 
-# lon , lat
-home=[-1.95917,50.83583]
+
 all_planes={}
 # planes with closest approach to home of less that TWEET_RADIUS miles will be tweeted
 TWEET_RADIUS=2.0
