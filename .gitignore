@@ -131,3 +131,5 @@ mk2/splat_10k.kmz
 mk2/vrs.kmz
 git_token
 mk2/.DS_Store
+mk2/basic-ac-db.json
+mk2/test.db

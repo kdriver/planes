@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 from kml import splat_doc
 from kml import write_kmz
 red = '7f0000ff'
@@ -32,6 +33,8 @@ for deg in range(0,359,1):
         coords_20k = coords_20k + [txt]
 
 splat_doc(coords_20k,"20k",green,green)
+
+print(datetime.datetime.now())
 
 
 

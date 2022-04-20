@@ -9,6 +9,7 @@ from vrs import Vrs
 from loggit import loggit
 from loggit import BOTH as BOTH
 from loggit import TO_FILE as TO_FILE
+from loggit import TO_FILE as TO_SCREEN
 from loggit import GREEN_TEXT as GREEN_TEXT
 from loggit import YELLOW_TEXT as YELLOW_TEXT
 from loggit import CYAN_TEXT as CYAN_TEXT
@@ -257,12 +258,12 @@ def dump_the_planes(icoa):
                     hd = abs(alt - int(this_plane['alt_baro']))
 
                 if proximity < 20 and hd < 1000:
-                    txt = "{" + " hex:{},proximity:{:.2f}".format(icoa,proximity)
+                    txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icoa,proximity)
                     for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
                         if item in this_plane:
-                            txt = txt + ",{}:{}".format(item,this_plane[item])
-
-                    txt = txt + ",tdiff:{:.2f}, tn:'{}' ".format((target_time - this_plane['touched']),get_time()) + "},"
+                            txt = txt + ",{}:'{}'".format(item,this_plane[item])
+                    txt = txt + ",version:'1'"
+                    txt = txt + ",tdiff:'{:.2f}', tn:'{}' ".format((target_time - this_plane['touched']),get_time()) + "},"
                     loggit(txt)
         else:
             loggit("could not find 'miles' in all_planes")
@@ -313,7 +314,7 @@ while 1:
 
     # every 60 seconds
     if ( now - last_tick ) >  60 :
-        loggit("{} planes being tracked ".format(len(all_planes)))
+        loggit("{} planes being tracked ".format(len(all_planes)),TO_SCREEN)
         last_tick = now
         #   write out a kml file with all the t planes we can see
         three_d_vrs(all_planes)

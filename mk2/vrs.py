@@ -21,9 +21,9 @@ class Vrs():
             for deg in range(0,360,1):
                 self.db.execute("INSERT into vrs({}) VALUES ( ?,?,?,?,?,?,?,?,?,?,?,?,? )".format(cols),(deg,0,0,0,0,0,0,0,0,0,0,0,0))
             self.db.commit() 
-            print("data populated")
+            print("VRS schema and data created")
         else:
-            print("data exists")
+            print("VRS data exists")
 
     def update_entry(self,bearing,lat,lon,alt,miles,icoa):
         if alt <= 10000:
@@ -72,6 +72,8 @@ class Vrs():
                 print("updated max {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
         else:
             print("no entry for bearing {}".format(bearing))
+
+
 if __name__ == '__main__':
     vserver = Vrs("vrs_test.sqb")
     print("done")

@@ -1,6 +1,7 @@
 
 TO_SCREEN=1
 TO_FILE=2
+TO_DEBUG=4
 BOTH=3
 
 
@@ -21,6 +22,7 @@ CLEAR="\033[0m"
 colour_map = { GREEN_TEXT : GREEN, RED_TEXT : RED , CYAN_TEXT : CYAN , YELLOW_TEXT : YELLOW , None : '' }
 
 log = open("output.txt","a")
+dlog = open("/tmp/debug.txt","w")
 
 def loggit(text,to=BOTH,col=None):
     prefix=''
@@ -36,6 +38,11 @@ def loggit(text,to=BOTH,col=None):
         prefix=CYAN
 
     prefix = colour_map[col]
+
+    if ( to & TO_DEBUG ) == TO_DEBUG:
+        dlog.write(text+"\n")
+        dlog.flush()
+
 
     if (to & TO_FILE) == TO_FILE:
         log.write(text+"\n")

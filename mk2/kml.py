@@ -82,6 +82,7 @@ vrs_text = """
 placemark_text = """
 <Placemark>
 <Style><IconStyle><Icon>
+  <heading>{}</heading>
   <href>http://maps.google.com/mapfiles/kml/shapes/airports.png</href>
 </Icon></IconStyle></Style>
 <name> {} </name>
@@ -121,14 +122,15 @@ def three_d_vrs(all_planes):
   for plane in all_planes:
     this_plane = all_planes[plane]
     proceed = True
-    for txt in ['miles','lat','lon','alt_baro','tail']:
+    for txt in ['miles','lat','lon','alt_baro','tail','track']:
       if txt not in this_plane:
         proceed = False
 
     if proceed is True:
-      if this_plane['miles'] < 180:
+      if this_plane['miles'] : # < 180:
         coords = "{},{},{}".format(this_plane['lon'],this_plane['lat'],this_plane['alt_baro'])
-        placemark = placemark_text.format(this_plane['tail'],coords)
+        the_text = this_plane['tail'] + " | " + this_plane['icoa']
+        placemark = placemark_text.format(this_plane['track'],the_text,coords)
         placemarks = placemarks + placemark 
     # else:
     #  print("False {}".format(this_plane['icoa']))
