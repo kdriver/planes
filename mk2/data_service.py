@@ -64,7 +64,7 @@ class DataService:
             the_hex = icao.lower()
 
             if '~' in icoa:
-                print("~ detected in icoa - dont lookup in blackswan" )
+                print("~ detected in icoa - dont lookup " )
                 return None
             rows = self.handle.execute(
                 "SELECT tail,type FROM aircraft WHERE hex = ?", (the_hex,))
@@ -88,6 +88,7 @@ class DataService:
                 loggit("addsb ex lookup {}".format(data), BOTH)
                 self.insert(data)
                 return row
+            loggit("Not found in ADSB exchange API",BOTH)
             try:
                 blackswan = blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
