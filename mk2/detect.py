@@ -44,23 +44,26 @@ def get_time(clock=time.time()):
     answer = time.asctime(time.localtime(clock))
     return answer
 
-def enrich(icoa,plane):
-    result  = add_reference_data(icoa,plane)
+
+def enrich(icoa, plane):
+    result = add_reference_data(icoa, plane)
     # if there is a tilde in the icoa and we could not resolve it, then in 60 seconds dump the planes
     if result is None:
         loggit("could not enrich plane")
     if result is None and '~' in icoa:
         loggit("found tilde in icoa , trigger a dump of planes around {}".format(icoa))
-        global dump_time,dump_icoa,dump_planes
+        global dump_time, dump_icoa, dump_planes
         dump_time = time.time() + 60
         dump_icoa = icoa
         dump_planes = True
     plane['enriched'] = 1
 
-def get_place(clat,clon):
+
+def get_place(clat, clon):
     place = "unknown"
     try:
-        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(clat,clon)
+        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(
+            clat, clon)
         resp = osm.get(url=req)
         pos = json.loads(resp.text)
         if 'display_name' in pos:
@@ -85,7 +88,7 @@ def nearest_point(plane):
                 pd = pd + " {:<} ".format(plane[item])
     try:
         sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
-    except:
+    except Exception as e:
         pass
 
     name=''
@@ -153,122 +156,132 @@ def nearest_point(plane):
         loggit(pd,BOTH,CYAN_TEXT)
         #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
 
+
 """
 Read the file produced by dump1090 and cache each plane seen so we can track its position reletive to home
 and check if it gets close.
 """
+
+
 def read_planes():
-        try:
-            with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
+    try:
+        with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
+            try:
+                data = json.load(f)
+            except:
+                print("error - can't open aircraft.json")
+
+            global all_planes
+            planes = data["aircraft"]
+            #num_planes = len(planes)
+            #print("num planes {}".format(num_planes))
+
+            for plane in planes:
+                start_miles = 1000
+                miles = start_miles
                 try:
-                    data = json.load(f)
-                except:
-                    print("error - can't open aircraft.json")
+                    icoa = plane["hex"].strip().upper()
+                    if icoa not in all_planes:
+                        all_planes[icoa] = {"icoa": icoa, 'max_miles': 0.0, 'closest_miles': start_miles,
+                                            'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINATE,icoa)}
+                    this_plane = all_planes[icoa]
+                    this_plane['touched'] = time.time()
 
-                global all_planes
-                planes   = data["aircraft"]
-                #num_planes = len(planes)
-                #print("num planes {}".format(num_planes))
+                except Exception as e:
+                    print("no icoa  code in plane record {} ".format(e))
+                    continue
 
-                for plane in planes:
-                    start_miles = 1000
-                    miles = start_miles
+                for attr in ['lon', 'lat', 'flight', 'track', 'alt_baro']:
+                    if attr in plane:
+                        this_plane[attr] = plane[attr]
+
+                if 'lat' in this_plane and 'lon' in this_plane and 'alt_baro' in this_plane:
                     try:
-                        icoa = plane["hex"].strip().upper()
-                        if icoa not in all_planes:
-                            all_planes[icoa] = { "icoa" : icoa , 'max_miles' : 0.0 , 'closest_miles' : start_miles,'closest_lat' : 0.0 , 'closest_lon' : 0.0 , 'miles' : start_miles , 'tracks' : my_queue(INFINATE)}
-                        this_plane = all_planes[icoa]
-                        this_plane['touched'] = time.time()
-                    
+                        hv = Haversine(
+                            home, [this_plane["lon"], this_plane["lat"]])
+                        miles = hv.miles
+                        bearing = int(hv.bearing)
+                        this_plane['current_miles'] = miles
+                        this_plane['tracks'].add(
+                            {'miles': miles, "lon": this_plane["lon"], "lat": this_plane["lat"], "alt": this_plane["alt_baro"]})
+                        if miles < this_plane['miles']:
+                            this_plane['closest_lat'] = float(
+                                this_plane['lat'])
+                            this_plane['closest_lon'] = float(
+                                this_plane['lon'])
+                            this_plane['closest_alt'] = this_plane["alt_baro"]
+                            this_plane['closest_miles'] = miles
+                            this_plane["closest_time"] = time.time()
+                            if this_plane['miles'] == start_miles:
+                                #loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                                pass
+                            if 'reported' in this_plane:
+                                del this_plane['reported']
+                            this_plane['miles'] = miles
+                        if miles > this_plane['max_miles']:
+                            this_plane['max_miles'] = miles
+                            this_plane['max_lon'] = this_plane['lon']
+                            this_plane['max_lat'] = this_plane['lat']
+                            if isinstance(this_plane["alt_baro"], int):
+                                vrs.update_entry(
+                                    bearing, this_plane["lat"], this_plane["lon"], this_plane["alt_baro"], miles, this_plane["icoa"])
+
                     except Exception as e:
-                        print("no icoa  code in plane record {} ".format(e))
+                        print("oh dear haversine {} {}".format(
+                            e, json.dumps(this_plane)))
                         continue
 
-                    for  attr in ['lon','lat','flight','track','alt_baro']:
-                        if attr in plane:
-                            this_plane[attr] = plane[attr]
+                if miles < 200 and 'enriched' not in this_plane:
+                    enrich(icoa, this_plane)
 
-                    if 'lat' in this_plane and 'lon' in this_plane and 'alt_baro' in this_plane:
-                        try:
-                            hv = Haversine(home,[this_plane["lon"],this_plane["lat"]])
-                            miles = hv.miles
-                            bearing = int(hv.bearing)
-                            this_plane['current_miles'] = miles
-                            this_plane['tracks'].add({'miles':miles,"lon":this_plane["lon"],"lat":this_plane["lat"],"alt":this_plane["alt_baro"]})
-                            if miles < this_plane['miles']:
-                                this_plane['closest_lat'] = float(this_plane['lat'])
-                                this_plane['closest_lon'] = float(this_plane['lon'])
-                                this_plane['closest_alt'] = this_plane["alt_baro"]
-                                this_plane['closest_miles'] = miles
-                                this_plane["closest_time"] = time.time()
-                                if this_plane['miles'] == start_miles:
-                                    #loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
-                                    pass
-                                if 'reported' in this_plane:
-                                    del this_plane['reported']
-                                this_plane['miles'] = miles
-                            if miles > this_plane['max_miles']:
-                                this_plane['max_miles'] = miles
-                                this_plane['max_lon']   = this_plane['lon']
-                                this_plane['max_lat']   = this_plane['lat'] 
-                                if isinstance(this_plane["alt_baro"],int):
-                                    vrs.update_entry(bearing,this_plane["lat"],this_plane["lon"],this_plane["alt_baro"],miles,this_plane["icoa"])
-
-                        except Exception as e:
-                            print("oh dear haversine {} {}".format(e,json.dumps(this_plane)))
-                            continue
-
-                    if  miles < 200 and 'enriched' not in this_plane:
-                        enrich(icoa,this_plane)
-
-                    if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
-                        if 'reported' not in this_plane and this_plane['closest_miles'] < 50:
-                            nearest_point(this_plane)
-        except Exception as e:
-                print(" error in read_planes {}\n".format(e))
-
-
+                if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
+                    if 'reported' not in this_plane and this_plane['closest_miles'] < 50:
+                        nearest_point(this_plane)
+    except Exception as e:
+        print(" error in read_planes {}\n".format(e))
 
 
 def dump_the_planes(icoa):
     loggit("Dump planes with similar distance to {}".format(icoa))
-    if icoa in all_planes:
-        target = all_planes[icoa]
-        if 'miles' in target:
-
-            if 'lat' not in target or  'lon' not in target:
-                loggit("target plane does not have both lat and lon - exit")
-                return
-
-            ll_target = [target['lat'],target['lon']]
-            distance = int(target['miles'])
-            alt = int(target['alt_baro'])
-            loggit("Dump ICOA {} distance {}, {}".format(icoa,distance, json.dumps(target,indent=4)))
-            target_time = target['touched']
-            for plane in all_planes:
-                this_plane = all_planes[plane]
-                proximity = 100
-                if 'lat' in this_plane and 'lon' in this_plane:
-                    ll_this = [ this_plane['lat'],this_plane['lon']]
-                    hv = Haversine(ll_target,ll_this)
-                    proximity = hv.miles
-
-                hd=1001
-                if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
-                    hd = abs(alt - int(this_plane['alt_baro']))
-
-                if proximity < 20 and hd < 1000:
-                    txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icoa,proximity)
-                    for item in ['icoa','alt_baro','miles','track','tail','lat','lon']:
-                        if item in this_plane:
-                            txt = txt + ",{}:'{}'".format(item,this_plane[item])
-                    txt = txt + ",version:'1'"
-                    txt = txt + ",tdiff:'{:.2f}', tn:'{}' ".format((target_time - this_plane['touched']),get_time()) + "},"
-                    loggit(txt)
-        else:
-            loggit("could not find 'miles' in all_planes")
-    else:
+    if icoa not in all_planes:
         loggit("could not find {} in all_planes".format(icoa))
+        return
+    target = all_planes[icoa]
+
+    if 'miles' not in target:
+        loggit("could not find 'miles' in all_planes")
+        return
+
+    if 'lat' not in target or 'lon' not in target:
+        loggit("target plane does not have both lat and lon - exit")
+        return
+
+    ll_target = [target['lat'], target['lon']]
+    distance = int(target['miles'])
+    alt = int(target['alt_baro'])
+    # loggit("Dump ICOA {} distance {}, {}".format(icoa, distance, json.dumps(target, indent=4)))
+    target_time = target['touched']
+    for plane in all_planes:
+        this_plane = all_planes[plane]
+        proximity = 100
+        if 'lat' in this_plane and 'lon' in this_plane:
+            ll_this = [this_plane['lat'], this_plane['lon']]
+            hv = Haversine(ll_target, ll_this)
+            proximity = hv.miles
+
+        hd = 1001
+        if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
+            hd = abs(alt - int(this_plane['alt_baro']))
+
+        if proximity < 20 and hd < 1000:
+            txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icoa, proximity)
+            for item in ['icoa', 'alt_baro', 'miles', 'track', 'tail', 'lat', 'lon']:
+                if item in this_plane:
+                    txt = txt + ",{}:'{}'".format(item, this_plane[item])
+            txt = txt + ",version:'1'"
+            txt = txt + ",tdiff:'{:.2f}', tn:'{}' ".format(
+                (target_time - this_plane['touched']), get_time()) + "},"
+            loggit(txt)
 
 
 init_reference_data()
@@ -289,14 +302,14 @@ while 1:
 
     for plane in delete_list:
         p = all_planes[plane]
-        if  'reported' not in p and 'miles' in p and p['miles'] < 50 :
+        if 'reported' not in p and 'miles' in p and p['miles'] < 50:
             p['expired'] = 1
             nearest_point(p)
-        write_kmz(home,p)
+        write_kmz(home, p)
         del all_planes[plane]
 
     # check to see if we need to referesh any of the online databases
-    update_reference_data() 
+    update_reference_data()
     # update the cache used by the HTTP query to generate a table  ( default port 4443 )
     update_plane_data(all_planes)
 
@@ -307,16 +320,16 @@ while 1:
             dump_planes = False
 
     if os.path.exists("check_icoa"):
-        with open('check_icoa') as f: 
+        with open('check_icoa') as f:
             s = f.read()
             dump_the_planes(str(s).strip().upper())
         os.remove('check_icoa')
 
     # every 60 seconds
-    if ( now - last_tick ) >  60 :
-        loggit("{} planes being tracked ".format(len(all_planes)),TO_SCREEN)
+    if (now - last_tick) > 60:
+        loggit("{} planes being tracked ".format(len(all_planes)), TO_SCREEN)
         last_tick = now
         #   write out a kml file with all the t planes we can see
         three_d_vrs(all_planes)
-    
+
     time.sleep(5)

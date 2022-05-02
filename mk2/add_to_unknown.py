@@ -45,3 +45,36 @@ def add_to_unknown_planes(icoa):
         loggit('could not add plane  {} to unknown planes database : {}'.format(icoa,e))
         return (None,None)
 
+
+def blackswan_lookup(icoa):
+    global counter
+    if '~' in icoa:
+        print("~ detected in icoa - dont lookup in blackswan" )
+        return(None,None)
+
+    try:
+        print('Lookup {} in blackswan'.format(icoa))
+        counter = counter + 1
+        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icoa))
+        page= r.text
+        soup = BeautifulSoup(page,"html.parser")
+        reg = soup.find("td" ,attrs={"data-target" :"reg"})
+        #model = soup.find("td" ,attrs={"data-target" :"model"}).text
+        model = soup.find("td" ,attrs={"data-target" :"type"})
+        instant = datetime.now()
+        the_diff = instant - start_time
+        in_seconds = the_diff.total_seconds()
+        in_days = in_seconds/(60*60*24)
+        requests_per_day = counter/in_days
+        print("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
+
+        if reg == None or model == None:
+            loggit("blackswan has no data for {}".format(icoa))
+            return(None,None)
+        else:
+            regt = reg.text
+            modelt = model.text
+            return (regt,modelt)
+    except Exception as e:
+        loggit('could not add plane  {} to unknown planes database : {}'.format(icoa,e))
+        return (None,None)

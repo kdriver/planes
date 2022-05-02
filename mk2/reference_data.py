@@ -4,23 +4,26 @@ import json
 from loggit import loggit
 from loggit import TO_FILE,TO_SCREEN
 from loggit import BOTH
-from loggit import RED_TEXT as RED_TEXT
+from loggit import RED_TEXT 
 import os
 import sqlite3
 import csv
 import adsbex_query
 from add_to_unknown import add_to_unknown_planes
+from data_service import DataService as DataService
 
 conn=None
 conn_base=None
 adsb_cache=None
+
+consolidated_data = None
 
 modes_map={}
 aircraft_data_map={}
 
 #last_updated = time.time() - (60*60*25)
 interval = (60*60*24)
-if os.getenv("UPDATE") != None:
+if os.getenv("UPDATE") is not None:
     last_updated = time.time() - ( 2*interval)
 else:
     last_updated = time.time() 
@@ -72,7 +75,9 @@ def init_reference_data():
         global conn
         global conn_base
         global modes_map
+        global consolidated_data
         loggit("Connecting to databases")
+        consolidated_data = DataService("consolidated_data.sqb")
         loggit("Standing data")
         conn = sqlite3.connect('StandingData.sqb')
         loggit("Base station ")
@@ -82,14 +87,15 @@ def init_reference_data():
         read_tsv = csv.reader(modes_file,delimiter='	')
         modes_map={}
         counter=0
-        for row in read_tsv:
-            try:
-                modes_map[row[2]] = row[4]
-                counter=counter+1
-            except:
-                pass
-            if not(counter % 1000):
-                print(".",end='',flush=True)
+        # for row in read_tsv:
+        #     try:
+        #         modes_map[row[2]] = row[4]
+        #         counter=counter+1
+        #     except:
+        #         pass
+        #     if not(counter % 1000):
+        #         print(".",end='',flush=True)
+        """
         loggit("\nbasic AC database")
         counter = 0
         with open('basic-ac-db.json') as f:
@@ -107,33 +113,34 @@ def init_reference_data():
                         print(".",end='',flush=True)
                 except Exception as e:
                     print("error parsing {} in basic-ac-db.json {}".format(line,e))
+         """
             
     
         
         loggit("Connected to databases")
 
 def update_reference_data():
-        global last_updated,conn,conn_base
-        tnow = time.time()
-        if ( tnow - last_updated ) > interval:
-            last_updated = tnow
-            try:
-                conn.close()
-                conn_base.close()
-                loggit("call script and try to refresh databasei {}".format(ascii_time()))
-                ans = call_command(["./update_BaseStation.sh"])
-                loggit("script returned")
-                conn_base = sqlite3.connect('./BaseStation.sqb')
-                conn = sqlite3.connect('./StandingData.sqb')
-                modes_file = open("./modes.tsv")
-                read_tsv = csv.reader(modes_file,delimiter='	')
-                modes_map={}
-                for row in read_tsv:
-                    modes_map[row[2]] = row[4]
-            except Exception as e:
-                print("Complete disaster - cant update the databases  " % e)
-                exit()
-            loggit("\nupdates completed on {:.2f} seconds\n".format(time.time()-tnow))
+    global last_updated,conn,conn_base
+    tnow = time.time()
+    if ( tnow - last_updated ) > interval:
+        last_updated = tnow
+        try:
+            conn.close()
+            conn_base.close()
+            loggit("call script and try to refresh databasei {}".format(ascii_time()))
+            ans = call_command(["./update_BaseStation.sh"])
+            loggit("script returned")
+            conn_base = sqlite3.connect('./BaseStation.sqb')
+            conn = sqlite3.connect('./StandingData.sqb')
+            # modes_file = open("./modes.tsv")
+            # read_tsv = csv.reader(modes_file,delimiter='	')
+            # modes_map={}
+            # for row in read_tsv:
+            #     modes_map[row[2]] = row[4]
+        except Exception as e:
+            print("Complete disaster - cant update the databases  " % e)
+            exit()
+        loggit("\nupdates completed on {:.2f} seconds\n".format(time.time()-tnow))
 
 
 """  
@@ -164,35 +171,35 @@ def add_tail_and_type(icoa,plane):
     reg = None
     ptype = None
     global conn_base
-    global  adsbex_cache
+    global adsbex_cache
     the_hex = icoa.strip().upper()
     # lookup in Basestation.sqb
     try:
         answer = conn_base.execute("SELECT Registration,Manufacturer,ICAOTypeCode,RegisteredOwners  FROM Aircraft WHERE ModeS = '%s'" % str(the_hex) )
         txt = answer.fetchone()
-        if txt != None:
-            if  txt[0] != None:
+        if txt is not None:
+            if  txt[0] is not None:
                 reg = "%s" % txt[0]
                 #loggit("{} got tail {} from Basestation".format(the_hex,reg),TO_FILE)
-            if txt[1] != None:
+            if txt[1] is not None:
                 plane['Manufacturer'] = "{}".format(txt[1])
-            if txt[2] != None:
+            if txt[2] is not None:
                 ptype = "{}".format(txt[2])
-            if txt[3] != None:
+            if txt[3] is not None:
                 plane['Owner'] = "{}".format(txt[3])
     except Exception as e:
         print("get_reg - database exception %s " % e )
 
     # lookup in ModeS tsv
-    if reg == None:
-        if the_hex in modes_map:
-            reg = modes_map[the_hex]
+    # if reg == None:
+    #     if the_hex in modes_map:
+    #         reg = modes_map[the_hex]
 
     # lookup in local copy of ADSB Exchange cache
-    if reg == None:
+    if reg is None:
         answer = adsbex_cache.execute("SELECT tail,type from cache WHERE hex = '{}'".format(the_hex))
         txt = answer.fetchone()
-        if txt != None and txt[0] != None:
+        if txt is not None and txt[0] is not None:
             #loggit("{} got tail and type from adsbex cached data {} {}".format(the_hex,txt[0],txt[1]),TO_FILE)
             reg = txt[0]
             ptype = txt[1]
@@ -200,12 +207,12 @@ def add_tail_and_type(icoa,plane):
             adsbex_cache.commit()
     
     # if we've never been able to find data on this hex value beofre we store it in unknown planes so we wont try and look it up again    
-    if reg == None:
+    if reg is None:
         try:
             conn_unknown = sqlite3.connect("unknown_planes.sqb")
             answer = conn_unknown.execute("SELECT registration,type from planes WHERE icoa = '{}'".format(the_hex))
             txt = answer.fetchone()
-            if txt != None and txt[0] != None:
+            if txt is not None and txt[0] is not None:
                 reg = txt[0]
                 ptype = txt[1]
                 conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icoa = '{}'".format(the_hex))
@@ -216,28 +223,28 @@ def add_tail_and_type(icoa,plane):
             loggit("problem reading unknown_planes database {}".format(e))
 
     # if we still haven't found it, try to look it up in adsbex   
-    if reg == None:
+    if reg is None:
         try:
             adsb = adsbex_query.adsb_lookup(the_hex)
         except Exception as e:
             loggit("adsb lookup exception {}".format(e),BOTH)
             adsb = None
 
-        if adsb != None:
+        if adsb is not None:
             reg = adsb['tail']
             ptype = adsb['type']
             insert_adsbex_cache((the_hex,reg,ptype,1))
             if 'from' in adsb:
-                    plane['route'] = "{}->{}".format(adsb['from'],adsb['to'])
+                plane['route'] = "{}->{}".format(adsb['from'],adsb['to'])
 
     # we've tried the sql databases, the ADSB online cache and previously unknown planes ... so add this one to unknown planes
-    if reg == None:
+    if reg is None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
         reg,ptype = add_to_unknown_planes(icoa)
         
-    if reg != None:
+    if reg is not None:
         plane['tail'] = reg
-    if ptype != None:
+    if ptype is not None:
         plane['plane'] = ptype
 
 
@@ -253,19 +260,28 @@ def add_route(icoa,plane):
         return
     answer = conn.execute("SELECT FromAirportName,ToAirportName  FROM RouteView WHERE Callsign = '%s'" % plane['flight'].strip() )
     txt = answer.fetchone()
-    if txt  != None and txt[0] != None:
+    if txt is not None and txt[0] != None:
         route = "%s -> %s" % ( txt[0], txt[1])
         #loggit("got route from sql %s " % route , TO_FILE)
         plane['route'] = route
 
+def add_tail_and_type_2(icoa,plane):
+    answer = consolidated_data.lookup(icoa)
+    if answer is None:
+        return None
+    plane['tail'] = answer[0]
+    plane['type'] = answer[1]
+    return answer
+
 def add_reference_data(icoa,plane):
-    result = add_tail_and_type(icoa,plane)
-    if result == None:
+    result = add_tail_and_type_2(icoa,plane)
+    if result is None:
         loggit("add_reference_data no tail found",BOTH,RED_TEXT )
 
     if 'route' not in plane:
         add_route(icoa,plane)
     return result
+
 
 if __name__ == "__main__":
     last_updated = time.time() - ( 2*interval)
