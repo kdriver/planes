@@ -63,19 +63,20 @@ class DataService:
 
             the_hex = icao.lower()
 
-            if '~' in icoa:
-                print("~ detected in icoa - dont lookup " )
+            if '~' in the_hex:
+                print("~ detected in icao - dont lookup " )
                 return None
             rows = self.handle.execute(
                 "SELECT tail,type FROM aircraft WHERE hex = ?", (the_hex,))
             row = rows.fetchone()
             if row is not None:
-                # loggit("found {}".format(row),BOTH)
+                # loggit("{} found {} in consolidated data".format(the_hex,row),BOTH)
                 return row
 
             if remote_lookup is not True:
                 return None
 
+            loggit("remote lookup {}".format(the_hex),BOTH)
             try:
                 adsb = adsbex_query.adsb_lookup(the_hex)
             except Exception as e:
@@ -84,6 +85,7 @@ class DataService:
 
             if adsb is not None:
                 row = (adsb['tail'], adsb['type'])
+                loggit("{} found {} in from ADSB API".format(the_hex,row),BOTH)
                 data = {'tail' : adsb['tail'],'model' : adsb['type'],'icao_hex' : the_hex, 'man' : None }
                 loggit("addsb ex lookup {}".format(data), BOTH)
                 self.insert(data)
@@ -94,7 +96,7 @@ class DataService:
                 if blackswan[0] is not None:
                     row = (blackswan[0], blackswan[1])
                     data = {'tail' : blackswan[0],'model' : blackswan[1],'icao_hex' : the_hex, 'man' : None }
-                    loggit("blackswan lookup {}".format(data), BOTH)
+                    loggit("{} found {} in from blackswan API".format(the_hex,row),BOTH)
                     self.insert(data)
                     return row
             except Exception as e:

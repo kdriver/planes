@@ -36,7 +36,7 @@ TWEET_RADIUS=2.0
 
 osm = requests.Session()
 dump_planes = False
-dump_icoa = None
+dump_icao = None
 dump_time = 0
 
 
@@ -45,16 +45,16 @@ def get_time(clock=time.time()):
     return answer
 
 
-def enrich(icoa, plane):
-    result = add_reference_data(icoa, plane)
-    # if there is a tilde in the icoa and we could not resolve it, then in 60 seconds dump the planes
+def enrich(icao, plane):
+    result = add_reference_data(icao, plane)
+    # if there is a tilde in the icao and we could not resolve it, then in 60 seconds dump the planes
     if result is None:
         loggit("could not enrich plane")
-    if result is None and '~' in icoa:
-        loggit("found tilde in icoa , trigger a dump of planes around {}".format(icoa))
-        global dump_time, dump_icoa, dump_planes
+    if result is None and '~' in icao:
+        loggit("found tilde in icao , trigger a dump of planes around {}".format(icao))
+        global dump_time, dump_icao, dump_planes
         dump_time = time.time() + 60
-        dump_icoa = icoa
+        dump_icao = icao
         dump_planes = True
     plane['enriched'] = 1
 
@@ -77,7 +77,10 @@ def get_place(clat, clon):
             
     
 def nearest_point(plane):
-    pd = "{} -> nearest   {} ".format(get_time(plane["closest_time"]),plane['icoa'])
+    #if 'miles' in plane:
+    #    loggit("nearest point for {} is {} miles".format(plane['icao'],plane['miles'],BOTH))
+
+    pd = "{} -> nearest   {} ".format(get_time(plane["closest_time"]),plane['icao'])
     for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
         if item in plane:
             if item in {'closest_miles','track'}:
@@ -87,7 +90,7 @@ def nearest_point(plane):
             else:
                 pd = pd + " {:<} ".format(plane[item])
     try:
-        sqldb.insert_data((time.time(),plane["flight"],plane["icoa"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
+        sqldb.insert_data((time.time(),plane["flight"],plane["icao"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
     except Exception as e:
         pass
 
@@ -109,6 +112,7 @@ def nearest_point(plane):
         zf.writestr("{}.kml".format(name),kml_text)
         zf.close()
 
+
     if 'expired' in plane:
         pd = pd + ' expired '
 
@@ -121,40 +125,43 @@ def nearest_point(plane):
 
     plane['reported'] = 1
 
-    if 'miles' in plane:
-        if plane['miles'] < TWEET_RADIUS:
-            tweet(pd)
-            pd = pd + " : " + place
-            loggit(pd,BOTH,GREEN_TEXT)
-            txt = "plane overhead "
-            if 'Owner' in plane:
-                txt = txt + " " + plane['Owner']
-            m = int(plane['miles'])
+    try:
+            if 'miles' in plane:
+                if plane['miles'] < TWEET_RADIUS:
+                    tweet(pd)
+                    pd = pd + " : " + place
+                    loggit(pd,BOTH,GREEN_TEXT)
+                    txt = "plane overhead "
+                    if 'Owner' in plane:
+                        txt = txt + " " + plane['Owner']
+                    m = int(plane['miles'])
 
-            if 'alt_baro' in plane:
-                if plane['alt_baro'] != 'ground':
-                    h = math.floor(int(plane['alt_baro'])/100)
-                    if h > 9:
-                        txt = txt + " at " + str(h/10) + " thousand feet"
+                    if 'alt_baro' in plane:
+                        if plane['alt_baro'] != 'ground':
+                            h = math.floor(int(plane['alt_baro'])/100)
+                            if h > 9:
+                                txt = txt + " at " + str(h/10) + " thousand feet"
+                            else:
+                                txt = txt + " at " + str(h) + " hundred feet"
                     else:
-                        txt = txt + " at " + str(h) + " hundred feet"
-            else:
-                txt = txt + " on ground"
+                        txt = txt + " on ground"
 
-            txt = txt + " distance {:>1.1f} miles".format(m)
-            say.speak(txt)
-        else:
-            pd = pd + " : " + place
-            if 'plane' in plane:
-                if 'DA42' in plane['plane']: 
-                    loggit(pd,BOTH,YELLOW_TEXT)
+                    txt = txt + " distance {:>1.1f} miles".format(m)
+                    say.speak(txt)
                 else:
-                    loggit(pd,BOTH,CYAN_TEXT)
-                    #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
-    else:
-        pd = pd + " " + json.dumps(plane)
-        loggit(pd,BOTH,CYAN_TEXT)
-        #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+                    pd = pd + " : " + place
+                    if 'plane' in plane:
+                        if 'DA42' in plane['plane']: 
+                            loggit(pd,BOTH,YELLOW_TEXT)
+                        else:
+                            loggit(pd,BOTH,CYAN_TEXT)
+                            #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+            else:
+                pd = pd + " " + json.dumps(plane)
+                loggit(pd,BOTH,CYAN_TEXT)
+                #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+    except Exception as e:
+             loggit("reporting failed {}".format(e))
 
 
 """
@@ -180,15 +187,15 @@ def read_planes():
                 start_miles = 1000
                 miles = start_miles
                 try:
-                    icoa = plane["hex"].strip().upper()
-                    if icoa not in all_planes:
-                        all_planes[icoa] = {"icoa": icoa, 'max_miles': 0.0, 'closest_miles': start_miles,
-                                            'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINATE,icoa)}
-                    this_plane = all_planes[icoa]
+                    icao = plane["hex"].strip().upper()
+                    if icao not in all_planes:
+                        all_planes[icao] = {"icao": icao, 'max_miles': 0.0, 'closest_miles': start_miles,
+                                            'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINATE,icao)}
+                    this_plane = all_planes[icao]
                     this_plane['touched'] = time.time()
 
                 except Exception as e:
-                    print("no icoa  code in plane record {} ".format(e))
+                    print("no icao  code in plane record {} ".format(e))
                     continue
 
                 for attr in ['lon', 'lat', 'flight', 'track', 'alt_baro']:
@@ -213,7 +220,7 @@ def read_planes():
                             this_plane['closest_miles'] = miles
                             this_plane["closest_time"] = time.time()
                             if this_plane['miles'] == start_miles:
-                                #loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icoa,miles),TO_FILE)
+                                #loggit("{:<7s} new plane  @ {:<7.2f} miles".format(icao,miles),TO_FILE)
                                 pass
                             if 'reported' in this_plane:
                                 del this_plane['reported']
@@ -224,7 +231,7 @@ def read_planes():
                             this_plane['max_lat'] = this_plane['lat']
                             if isinstance(this_plane["alt_baro"], int):
                                 vrs.update_entry(
-                                    bearing, this_plane["lat"], this_plane["lon"], this_plane["alt_baro"], miles, this_plane["icoa"])
+                                    bearing, this_plane["lat"], this_plane["lon"], this_plane["alt_baro"], miles, this_plane["icao"])
 
                     except Exception as e:
                         print("oh dear haversine {} {}".format(
@@ -232,7 +239,7 @@ def read_planes():
                         continue
 
                 if miles < 200 and 'enriched' not in this_plane:
-                    enrich(icoa, this_plane)
+                    enrich(icao, this_plane)
 
                 if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
                     if 'reported' not in this_plane and this_plane['closest_miles'] < 50:
@@ -241,12 +248,12 @@ def read_planes():
         print(" error in read_planes {}\n".format(e))
 
 
-def dump_the_planes(icoa):
-    loggit("Dump planes with similar distance to {}".format(icoa))
-    if icoa not in all_planes:
-        loggit("could not find {} in all_planes".format(icoa))
+def dump_the_planes(icao):
+    loggit("Dump planes with similar distance to {}".format(icao))
+    if icao not in all_planes:
+        loggit("could not find {} in all_planes".format(icao))
         return
-    target = all_planes[icoa]
+    target = all_planes[icao]
 
     if 'miles' not in target:
         loggit("could not find 'miles' in all_planes")
@@ -259,7 +266,7 @@ def dump_the_planes(icoa):
     ll_target = [target['lat'], target['lon']]
     distance = int(target['miles'])
     alt = int(target['alt_baro'])
-    # loggit("Dump ICOA {} distance {}, {}".format(icoa, distance, json.dumps(target, indent=4)))
+    # loggit("Dump icao {} distance {}, {}".format(icao, distance, json.dumps(target, indent=4)))
     target_time = target['touched']
     for plane in all_planes:
         this_plane = all_planes[plane]
@@ -274,8 +281,8 @@ def dump_the_planes(icoa):
             hd = abs(alt - int(this_plane['alt_baro']))
 
         if proximity < 20 and hd < 1000:
-            txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icoa, proximity)
-            for item in ['icoa', 'alt_baro', 'miles', 'track', 'tail', 'lat', 'lon']:
+            txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icao, proximity)
+            for item in ['icao', 'alt_baro', 'miles', 'track', 'tail', 'lat', 'lon']:
                 if item in this_plane:
                     txt = txt + ",{}:'{}'".format(item, this_plane[item])
             txt = txt + ",version:'1'"
@@ -296,9 +303,9 @@ while 1:
     read_planes()
     delete_list = []
     now = time.time()
-    for icoa in all_planes:
-        if (now - all_planes[icoa]['touched']) > 60:
-            delete_list.append(icoa)
+    for icao in all_planes:
+        if (now - all_planes[icao]['touched']) > 60:
+            delete_list.append(icao)
 
     for plane in delete_list:
         p = all_planes[plane]
@@ -313,17 +320,17 @@ while 1:
     # update the cache used by the HTTP query to generate a table  ( default port 4443 )
     update_plane_data(all_planes)
 
-    #triggered if we have seen a tilde encoded in the icoa hex
+    #triggered if we have seen a tilde encoded in the icao hex
     if dump_planes:
         if now > dump_time:
-            dump_the_planes(dump_icoa)
+            dump_the_planes(dump_icao)
             dump_planes = False
 
-    if os.path.exists("check_icoa"):
-        with open('check_icoa') as f:
+    if os.path.exists("check_icao"):
+        with open('check_icao') as f:
             s = f.read()
             dump_the_planes(str(s).strip().upper())
-        os.remove('check_icoa')
+        os.remove('check_icao')
 
     # every 60 seconds
     if (now - last_tick) > 60:

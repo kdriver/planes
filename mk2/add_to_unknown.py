@@ -7,16 +7,16 @@ from loggit import loggit
 counter=0
 start_time=datetime.now()
 
-def add_to_unknown_planes(icoa):
+def add_to_unknown_planes(icao):
     global counter
-    if '~' in icoa:
-        print("~ detected in icoa - dont lookup in blackswan" )
+    if '~' in icao:
+        print("~ detected in icao - dont lookup in blackswan" )
         return(None,None)
 
     try:
         print('Lookup in blackswan')
         counter = counter + 1
-        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icoa))
+        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icao))
         page= r.text
         soup = BeautifulSoup(page,"html.parser")
         reg = soup.find("td" ,attrs={"data-target" :"reg"})
@@ -30,32 +30,32 @@ def add_to_unknown_planes(icoa):
         print("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
 
         if reg == None or model == None:
-            loggit("blackswan has no data for {}".format(icoa))
+            loggit("blackswan has no data for {}".format(icao))
             return(None,None)
         else:
             regt = reg.text
             modelt = model.text
             con = sqlite3.connect("unknown_planes.sqb")
-            con.execute("INSERT INTO planes (icoa,registration,type,timestamp,count) VALUES ( '{}','{}','{}','{}','{}' )".format(icoa,regt,modelt,datetime.now(),1))
+            con.execute("INSERT INTO planes (icao,registration,type,timestamp,count) VALUES ( '{}','{}','{}','{}','{}' )".format(icao,regt,modelt,datetime.now(),1))
             con.commit()
             con.close()
-            loggit("added locally to unkown planes from blackswan data {} {} {}".format(icoa,regt,modelt))
+            loggit("added locally to unkown planes from blackswan data {} {} {}".format(icao,regt,modelt))
             return (regt,modelt)
     except Exception as e:
-        loggit('could not add plane  {} to unknown planes database : {}'.format(icoa,e))
+        loggit('could not add plane  {} to unknown planes database : {}'.format(icao,e))
         return (None,None)
 
 
-def blackswan_lookup(icoa):
+def blackswan_lookup(icao):
     global counter
-    if '~' in icoa:
-        print("~ detected in icoa - dont lookup in blackswan" )
+    if '~' in icao:
+        print("~ detected in icao - dont lookup in blackswan" )
         return(None,None)
 
     try:
-        print('Lookup {} in blackswan'.format(icoa))
+        print('Lookup {} in blackswan'.format(icao))
         counter = counter + 1
-        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icoa))
+        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icao))
         page= r.text
         soup = BeautifulSoup(page,"html.parser")
         reg = soup.find("td" ,attrs={"data-target" :"reg"})
@@ -69,12 +69,12 @@ def blackswan_lookup(icoa):
         print("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
 
         if reg == None or model == None:
-            loggit("blackswan has no data for {}".format(icoa))
+            loggit("blackswan has no data for {}".format(icao))
             return(None,None)
         else:
             regt = reg.text
             modelt = model.text
             return (regt,modelt)
     except Exception as e:
-        loggit('could not add plane  {} to unknown planes database : {}'.format(icoa,e))
+        loggit('could not add plane  {} to unknown planes database : {}'.format(icao,e))
         return (None,None)

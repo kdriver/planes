@@ -129,11 +129,11 @@ def three_d_vrs(all_planes):
     if proceed is True:
       if this_plane['miles'] : # < 180:
         coords = "{},{},{}".format(this_plane['lon'],this_plane['lat'],this_plane['alt_baro'])
-        the_text = this_plane['tail'] + " | " + this_plane['icoa']
+        the_text = this_plane['tail'] + " | " + this_plane['icao']
         placemark = placemark_text.format(this_plane['track'],the_text,coords)
         placemarks = placemarks + placemark 
     # else:
-    #  print("False {}".format(this_plane['icoa']))
+    #  print("False {}".format(this_plane['icao']))
 
   doc_text = vrs_text.format(placemarks)  
   zf = zipfile.ZipFile("vrs.kmz","w")

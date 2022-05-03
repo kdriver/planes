@@ -77,6 +77,7 @@ def init_reference_data():
         global modes_map
         global consolidated_data
         loggit("Connecting to databases")
+        loggit("Consolidated data")
         consolidated_data = DataService("consolidated_data.sqb")
         loggit("Standing data")
         conn = sqlite3.connect('StandingData.sqb')
@@ -166,13 +167,13 @@ def update_reference_data():
 """
 
 
-def add_tail_and_type(icoa,plane):
+def add_tail_and_type(icao,plane):
     # find the tail, plane type and route
     reg = None
     ptype = None
     global conn_base
     global adsbex_cache
-    the_hex = icoa.strip().upper()
+    the_hex = icao.strip().upper()
     # lookup in Basestation.sqb
     try:
         answer = conn_base.execute("SELECT Registration,Manufacturer,ICAOTypeCode,RegisteredOwners  FROM Aircraft WHERE ModeS = '%s'" % str(the_hex) )
@@ -210,12 +211,12 @@ def add_tail_and_type(icoa,plane):
     if reg is None:
         try:
             conn_unknown = sqlite3.connect("unknown_planes.sqb")
-            answer = conn_unknown.execute("SELECT registration,type from planes WHERE icoa = '{}'".format(the_hex))
+            answer = conn_unknown.execute("SELECT registration,type from planes WHERE icao = '{}'".format(the_hex))
             txt = answer.fetchone()
             if txt is not None and txt[0] is not None:
                 reg = txt[0]
                 ptype = txt[1]
-                conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icoa = '{}'".format(the_hex))
+                conn_unknown.execute("UPDATE planes SET count = count + 1 WHERE icao = '{}'".format(the_hex))
                 conn_unknown.commit()
                 loggit("{} got tail and type from local unknown_planes database {} {}".format(the_hex,reg,ptype),TO_FILE)
             conn_unknown.close()
@@ -240,7 +241,7 @@ def add_tail_and_type(icoa,plane):
     # we've tried the sql databases, the ADSB online cache and previously unknown planes ... so add this one to unknown planes
     if reg is None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
-        reg,ptype = add_to_unknown_planes(icoa)
+        reg,ptype = add_to_unknown_planes(icao)
         
     if reg is not None:
         plane['tail'] = reg
@@ -248,13 +249,13 @@ def add_tail_and_type(icoa,plane):
         plane['plane'] = ptype
 
 
-    #loggit("enriched result {} {}".format(icoa , reg),TO_SCREEN)
+    #loggit("enriched result {} {}".format(icao , reg),TO_SCREEN)
 
     return reg
 
     
 
-def add_route(icoa,plane):
+def add_route(icao,plane):
     global conn
     if 'flight' not in plane:
         return
@@ -265,21 +266,21 @@ def add_route(icoa,plane):
         #loggit("got route from sql %s " % route , TO_FILE)
         plane['route'] = route
 
-def add_tail_and_type_2(icoa,plane):
-    answer = consolidated_data.lookup(icoa)
+def add_tail_and_type_2(icao,plane):
+    answer = consolidated_data.lookup(icao)
     if answer is None:
         return None
     plane['tail'] = answer[0]
-    plane['type'] = answer[1]
+    plane['plane'] = answer[1]
     return answer
 
-def add_reference_data(icoa,plane):
-    result = add_tail_and_type_2(icoa,plane)
+def add_reference_data(icao,plane):
+    result = add_tail_and_type_2(icao,plane)
     if result is None:
-        loggit("add_reference_data no tail found",BOTH,RED_TEXT )
+        loggit("add_reference_data no tail found {}".format(icao),BOTH,RED_TEXT )
 
     if 'route' not in plane:
-        add_route(icoa,plane)
+        add_route(icao,plane)
     return result
 
 

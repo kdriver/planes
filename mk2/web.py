@@ -14,7 +14,7 @@ def page():
     txt = txt + '<p><button onclick="sortTable(3)">Sort Closest pass</button><button onclick="sortTable(4)">Sort current dist</button></p>'
     txt = txt + '<table id="myTable">'
     txt = txt + '<tr class="header">'
-    txt = txt + '<th> ICOA </th>'
+    txt = txt + '<th> icao </th>'
     txt = txt + '<th> flight </th>'
     txt = txt + '<th> tail </th>'
     txt = txt + '<th> closest </th>'
@@ -29,7 +29,7 @@ def page():
     for plane in planes:
         p = planes[plane]
         txt = txt + '<tr>'
-        for item in ['icoa','flight','tail','closest_miles','current_miles','plane','alt_baro','closest_lat','closest_lon','route']:
+        for item in ['icao','flight','tail','closest_miles','current_miles','plane','alt_baro','closest_lat','closest_lon','route']:
             txt = txt + '<td>'
             if item in p:
                 if type(p[item]) == float:

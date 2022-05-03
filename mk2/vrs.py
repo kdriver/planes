@@ -25,19 +25,19 @@ class Vrs():
         else:
             print("VRS data exists")
 
-    def update_entry(self,bearing,lat,lon,alt,miles,icoa):
+    def update_entry(self,bearing,lat,lon,alt,miles,icao):
         if alt <= 10000:
-            self.update_entry_10k(bearing,lat,lon,alt,miles,icoa)
+            self.update_entry_10k(bearing,lat,lon,alt,miles,icao)
         else:
             if alt <= 20000:
-                self.update_entry_20k(bearing,lat,lon,alt,miles,icoa)
+                self.update_entry_20k(bearing,lat,lon,alt,miles,icao)
             else:
-                self.update_entry_max(bearing,lat,lon,alt,miles,icoa)
+                self.update_entry_max(bearing,lat,lon,alt,miles,icao)
 
 
 
 
-    def update_entry_10k(self,bearing,lat,lon,alt,miles,icoa):
+    def update_entry_10k(self,bearing,lat,lon,alt,miles,icao):
         answer = self.db.execute("SELECT miles_10k FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
         if txt != None:
@@ -45,11 +45,11 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_10k = ?, lon_10k = ?, alt_10k = ? , miles_10k = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated 10k {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
+                print("updated 10k {} from {} to {} , with icao {} alt {}".format(bearing,txt[0],miles,icao,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 
-    def update_entry_20k(self,bearing,lat,lon,alt,miles,icoa):
+    def update_entry_20k(self,bearing,lat,lon,alt,miles,icao):
         answer = self.db.execute("SELECT miles_20k FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
         if txt != None:
@@ -57,11 +57,11 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_20k = ?, lon_20k = ?, alt_20k = ? , miles_20k = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated 20k {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
+                print("updated 20k {} from {} to {} , with icao {} alt {}".format(bearing,txt[0],miles,icao,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 
-    def update_entry_max(self,bearing,lat,lon,alt,miles,icoa):
+    def update_entry_max(self,bearing,lat,lon,alt,miles,icao):
         answer = self.db.execute("SELECT miles_max FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
         if txt != None:
@@ -69,7 +69,7 @@ class Vrs():
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_max = ?, lon_max = ?, alt_max = ? , miles_max = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles))
                 self.db.commit()
-                print("updated max {} from {} to {} , with icoa {} alt {}".format(bearing,txt[0],miles,icoa,alt))
+                print("updated max {} from {} to {} , with icao {} alt {}".format(bearing,txt[0],miles,icao,alt))
         else:
             print("no entry for bearing {}".format(bearing))
 
