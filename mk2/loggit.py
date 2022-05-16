@@ -40,18 +40,18 @@ def loggit(text,to=BOTH,col=None):
     prefix = colour_map[col]
 
     if ( to & TO_DEBUG ) == TO_DEBUG:
-        dlog.write(text+"\n")
+        dlog.write(str(text)+"\n")
         dlog.flush()
 
 
     if (to & TO_FILE) == TO_FILE:
-        log.write(text+"\n")
+        log.write(str(text)+"\n")
         log.flush()
 
-    if col != None:
-        text = prefix + text + suffix
+    if col is not None:
+        text = prefix + str(text) + suffix
 
     if (to & TO_SCREEN) == TO_SCREEN:
-        print(text)
+        print(str(text))
 
 

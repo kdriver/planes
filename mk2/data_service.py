@@ -34,6 +34,7 @@ class DataService:
             cursor.execute(self.create_text)
             self.handle.commit()
             # self.refresh_external_data()
+            # self.update_local_cache()
         except Exception as e:
             print(e)
             print("Could not open database {}".format(data_file))
@@ -87,8 +88,8 @@ class DataService:
                 row = (adsb['tail'], adsb['type'])
                 loggit("{} found {} in from ADSB API".format(the_hex,row),BOTH)
                 data = {'tail' : adsb['tail'],'model' : adsb['type'],'icao_hex' : the_hex, 'man' : None }
-                loggit("addsb ex lookup {}".format(data), BOTH)
-                self.insert(data)
+                loggit("adsb exchange lookup {}".format(data), BOTH)
+                self.insert(data,True)
                 return row
             loggit("Not found in ADSB exchange API",BOTH)
             try:
@@ -97,7 +98,7 @@ class DataService:
                     row = (blackswan[0], blackswan[1])
                     data = {'tail' : blackswan[0],'model' : blackswan[1],'icao_hex' : the_hex, 'man' : None }
                     loggit("{} found {} in from blackswan API".format(the_hex,row),BOTH)
-                    self.insert(data)
+                    self.insert(data,True)
                     return row
             except Exception as e:
                 loggit("blackswan lookup exception {}".format(e), BOTH)
@@ -106,7 +107,7 @@ class DataService:
             loggit("error looking up {} {}".format(icao, e), TO_FILE)
         return None
 
-    def insert(self, plane_dict):
+    def insert(self, plane_dict, commit_it=False):
         try:
             cursor = self.handle.cursor()
             data_tuple = (plane_dict["icao_hex"].lower(),
@@ -114,18 +115,21 @@ class DataService:
             cursor.execute(
                 "INSERT INTO aircraft(%s) VALUES (?,?,?,?,?)" % self.cols, data_tuple)
             loggit("insert {} ".format(data_tuple), TO_DEBUG)
-            # self.handle.commit()
+            if commit_it is True:
+                self.handle.commit()
         except Exception as e:
             print("insert into local cache exception {}".format(e))
 
     def update(self, plane):
+        data = (plane["tail"], plane["model"], plane["icao_hex"].lower())
         try:
-            data = (plane["tail"], plane["model"], plane["icao_hex"].lower())
             # print(data)
             self.handle.execute(
                 "UPDATE aircraft SET tail = ?,type = ? WHERE hex = ? ", data)
         except Exception as e:
             print("update local cache exception {}".format(e))
+            print("update data  {} {}".format(datai,type(data[1])))
+            sys.exit()
 
     def refresh_external_data(self):
         print("Refreshing data from external source")
@@ -133,7 +137,7 @@ class DataService:
         loggit("script returned")
 
     def update_from_modeS_tsv(self):
-        loggit("update from ADSB Exchange Basic data")
+        loggit("update from ADSB ModeS tsv")
         modes_file = open("./modes.tsv")
         read_tsv = csv.reader(modes_file,delimiter='	')
         counter=0
@@ -154,12 +158,14 @@ class DataService:
                     inserts = inserts + 1
 
                 counter=counter+1
-                if not(counter % 1000):
+                if not(counter % 50000):
                     loggit("modeS {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),TO_SCREEN)       
                     # print(".",end='',flush=True)
                     self.handle.commit()
             except Exception as e:
                 loggit("error parsing in modeS.tsv {} tsv is {} ".format(e,row),TO_FILE)
+
+        loggit("\nfinished parsing ModeS tsv {} records. {} inserts , {} updates {} errors ".format(counter,inserts,updates,errors))       
 
         self.handle.commit()
      
@@ -197,7 +203,7 @@ class DataService:
                             updates = updates + 1
                     """
 
-                    if not(counter % 1000):
+                    if not(counter % 50000):
                         loggit("interim {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),TO_SCREEN)       
                         # print(".",end='',flush=True)
                         self.handle.commit()
@@ -209,7 +215,8 @@ class DataService:
         # commit the changes / insertions we made
         self.handle.commit()
 
-    def update_from_adsb_standing_data(self):
+    def update_from_adsb_basestation_data(self):
+        loggit("update from BaseStation data")
         handle = sqlite3.connect("BaseStation.sqb")
         cursor = handle.cursor()
         cursor.execute("SELECT ModeS,Registration,ICAOTypeCode FROM Aircraft")
@@ -231,27 +238,28 @@ class DataService:
                 self.insert({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })
                 inserts = inserts + 1 
             else:
-                if local_data[TAIL] != tail or local_data[TYPE] != type:
+                if local_data[TAIL] != tail or local_data[TYPE] != plane_type:
                     # update the record
                     if tail is not None:
-                        loggit("StandingData {} local {} standing {}".format(icao,local_data,row),TO_DEBUG)
-                        self.update({ 'tail' : tail, 'icao_hex' : icao, 'model' : type })
+                        loggit("Basestation data {} local {} standing {}".format(icao,local_data,row),TO_DEBUG)
+                        self.update({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })
                         updates = updates + 1
-            if not(counter % 1000):
+            if not(counter % 50000):
                 loggit("interim {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),TO_SCREEN)       
                 # print(".",end='',flush=True)
                 self.handle.commit()
         loggit("\nfinished parsing StandingData  {} records. {} inserts , {} updates {} errors ".format(counter,inserts,updates,errors)) 
+        self.handle.commit()
 
     def update_local_cache(self):
         self.update_from_adsbex_basic_data()
-        self.update_from_adsb_standing_data()
+        self.update_from_adsb_basestation_data()
         self.update_from_modeS_tsv()
 
 
 
 if __name__ == "__main__":
     print("Lets start testing")
-    home = os.path.expanduser('~')
-    ds = DataService(home + "/test.db")
+    home = os.path.expanduser('~/planes/mk2')
+    ds = DataService(home + "/consolidated_data.sqb")
     ds.update_local_cache()

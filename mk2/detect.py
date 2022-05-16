@@ -82,17 +82,23 @@ def nearest_point(plane):
 
     pd = "{} -> nearest   {} ".format(get_time(plane["closest_time"]),plane['icao'])
     for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
-        if item in plane:
+        if item in plane and plane[item] is not None:
             if item in {'closest_miles','track'}:
                 pd = pd + " {:>7.2f} ".format(plane[item])
             elif  item in {'flight','tail','alt_baro'}:
                 pd = pd + "{0:7} ".format(plane[item])
             else:
                 pd = pd + " {:<} ".format(plane[item])
+        else:
+            if item in ['closest_miles','track','alt_baro']:
+                plane[item] = 0
+            else: 
+                plane[item] = "unknown"
+
     try:
         sqldb.insert_data((time.time(),plane["flight"],plane["icao"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
     except Exception as e:
-        pass
+        loggit("could not insert data iinto planes record {}".format(e))
 
     name=''
     if 'tail' in plane:
