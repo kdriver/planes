@@ -1,11 +1,14 @@
+"""   A module to provide enrichment services from reference data downloaded externally to this module """
 
 import os
 import sqlite3
 import csv
 import subprocess
-import adsbex_query
 import json
 import sys
+
+import adsbex_query
+
 from add_to_unknown import blackswan_lookup as blackswan_lookup
 
 from loggit import loggit
@@ -15,13 +18,13 @@ from loggit import TO_FILE, TO_SCREEN, BOTH, TO_DEBUG
 TAIL = 0
 TYPE = 1
 
-"""
-This class manages access to reference data so that we can use the icao hex value to lookup tail, plane etc
-"""
 
 
 class DataService:
-
+    """
+    This class manages access to reference data so that 
+    we can use the icao hex value to lookup tail, plane etc
+    """
     create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer, looked_up integer); """
     cols = "  hex , tail , type , seen  , looked_up"
 
@@ -54,18 +57,17 @@ class DataService:
 
         return val
 
-    """
-        Look for data against the icao hex value and return a list of va,ues found, or None
-    """
 
     def lookup(self, icao, remote_lookup=True):
         # loggit("lookup {}".format(icao),BOTH)
+        """
+        Look for data against the icao hex value and return a list of va,ues found, or None
+        """
         try:
 
             the_hex = icao.lower()
 
-            if '~' in the_hex:
-                print("~ detected in icao - dont lookup " )
+            if '~' in the_hex:  # Its a TIS-B record
                 return None
             rows = self.handle.execute(
                 "SELECT tail,type FROM aircraft WHERE hex = ?", (the_hex,))
@@ -80,34 +82,47 @@ class DataService:
             loggit("remote lookup {}".format(the_hex),BOTH)
             try:
                 adsb = adsbex_query.adsb_lookup(the_hex)
-            except Exception as e:
-                loggit("adsb lookup exception {}".format(e), BOTH)
+            except Exception as my_exception:
+                loggit("adsb lookup exception {}".format(my_exception), BOTH)
                 adsb = None
 
             if adsb is not None:
                 row = (adsb['tail'], adsb['type'])
                 loggit("{} found {} in from ADSB API".format(the_hex,row),BOTH)
-                data = {'tail' : adsb['tail'],'model' : adsb['type'],'icao_hex' : the_hex, 'man' : None }
+                data = {
+                        'tail' : adsb['tail'],
+                        'model' : adsb['type'],
+                        'icao_hex' : the_hex,
+                        'man' : None
+                        }
                 loggit("adsb exchange lookup {}".format(data), BOTH)
                 self.insert(data,True)
                 return row
-            loggit("Not found in ADSB exchange API",BOTH)
+            loggit("{} Not found in ADSB exchange API".format(icao),BOTH)
             try:
                 blackswan = blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
                     row = (blackswan[0], blackswan[1])
-                    data = {'tail' : blackswan[0],'model' : blackswan[1],'icao_hex' : the_hex, 'man' : None }
+                    data = {
+                                'tail' : blackswan[0],
+                                'model': blackswan[1],
+                                'icao_hex' : the_hex,
+                                'man' : None
+                            }
                     loggit("{} found {} in from blackswan API".format(the_hex,row),BOTH)
                     self.insert(data,True)
                     return row
+                loggit("{} Not found in blackswan API".format(icao),BOTH)
+
             except Exception as e:
                 loggit("blackswan lookup exception {}".format(e), BOTH)
-                
+           
         except Exception as e:
             loggit("error looking up {} {}".format(icao, e), TO_FILE)
         return None
 
     def insert(self, plane_dict, commit_it=False):
+        """ Insert a new entry into the database = optional commit for performance"""
         try:
             cursor = self.handle.cursor()
             data_tuple = (plane_dict["icao_hex"].lower(),
@@ -121,6 +136,8 @@ class DataService:
             print("insert into local cache exception {}".format(e))
 
     def update(self, plane):
+        """ update the plane column """
+
         data = (plane["tail"], plane["model"], plane["icao_hex"].lower())
         try:
             # print(data)
@@ -128,7 +145,7 @@ class DataService:
                 "UPDATE aircraft SET tail = ?,type = ? WHERE hex = ? ", data)
         except Exception as e:
             print("update local cache exception {}".format(e))
-            print("update data  {} {}".format(datai,type(data[1])))
+            print("update data  {} {}".format(data,type(data[1])))
             sys.exit()
 
     def refresh_external_data(self):
@@ -168,7 +185,8 @@ class DataService:
         loggit("\nfinished parsing ModeS tsv {} records. {} inserts , {} updates {} errors ".format(counter,inserts,updates,errors))       
 
         self.handle.commit()
-     
+
+
     def update_from_adsbex_basic_data(self):
         counter = 0
         inserts=0
@@ -204,7 +222,7 @@ class DataService:
                     """
 
                     if not(counter % 50000):
-                        loggit("interim {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),TO_SCREEN)       
+                        loggit("interim {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),BOTH) 
                         # print(".",end='',flush=True)
                         self.handle.commit()
                 except Exception as e:
@@ -253,8 +271,8 @@ class DataService:
 
     def update_local_cache(self):
         self.update_from_adsbex_basic_data()
-        self.update_from_adsb_basestation_data()
-        self.update_from_modeS_tsv()
+        # self.update_from_adsb_basestation_data()
+        # self.update_from_modeS_tsv()
 
 
 

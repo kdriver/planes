@@ -1,15 +1,16 @@
+""" This module uses reference data to enrich the plane records """
 import subprocess
+
+import sqlite3
+import os
+import csv
 import time
-import json
 from loggit import loggit
 from loggit import TO_FILE,TO_SCREEN
 from loggit import BOTH
 from loggit import RED_TEXT 
-import os
-import sqlite3
-import csv
-import adsbex_query
-from add_to_unknown import add_to_unknown_planes
+# import adsbex_query
+# from add_to_unknown import add_to_unknown_planes
 from data_service import DataService as DataService
 
 conn=None
@@ -33,6 +34,7 @@ create_text = """ CREATE TABLE IF NOT EXISTS cache ( id integer primary key auto
 cols = "  hex , tail , type , seen  " 
 
 def ascii_time():
+    """ Return an ascii time string """
     return time.asctime( time.localtime(time.time()))
 
 def attach_adsbex_cache():
@@ -72,49 +74,49 @@ def call_command(command):
     return val
 
 def init_reference_data():
-        global conn
-        global conn_base
-        global modes_map
-        global consolidated_data
-        loggit("Connecting to databases")
-        loggit("Consolidated data")
-        consolidated_data = DataService("consolidated_data.sqb")
-        loggit("Standing data")
-        conn = sqlite3.connect('StandingData.sqb')
-        loggit("Base station ")
-        conn_base = sqlite3.connect('./BaseStation.sqb')
-        loggit("ModeS list ")
-        modes_file = open("./modes.tsv")
-        read_tsv = csv.reader(modes_file,delimiter='	')
-        modes_map={}
-        counter=0
-        # for row in read_tsv:
-        #     try:
-        #         modes_map[row[2]] = row[4]
-        #         counter=counter+1
-        #     except:
-        #         pass
-        #     if not(counter % 1000):
-        #         print(".",end='',flush=True)
+    global conn
+    global conn_base
+    global modes_map
+    global consolidated_data
+    loggit("Connecting to databases")
+    loggit("Consolidated data")
+    consolidated_data = DataService("consolidated_data.sqb")
+    loggit("Standing data")
+    conn = sqlite3.connect('StandingData.sqb')
+    loggit("Base station ")
+    conn_base = sqlite3.connect('./BaseStation.sqb')
+    loggit("ModeS list ")
+    modes_file = open("./modes.tsv")
+    read_tsv = csv.reader(modes_file,delimiter='	')
+    modes_map={}
+    counter=0
+    # for row in read_tsv:
+    #     try:
+    #         modes_map[row[2]] = row[4]
+    #         counter=counter+1
+    #     except:
+    #         pass
+    #     if not(counter % 1000):
+    #         print(".",end='',flush=True)
+    """
+    loggit("\nbasic AC database")
+    counter = 0
+    with open('basic-ac-db.json') as f:
+        while True:
+            global aircraft_data_map
+            try:
+                counter = counter + 1
+                line = f.readline()
+                if not line:
+                    break
+                ac = json.loads(line)
+                ac_data = [ ac["reg"],ac["icao"],ac["manufacturer"],ac["model"]]
+                aircraft_data_map[ac['icao']] = ac_data
+                if not(counter % 1000):
+                    print(".",end='',flush=True)
+            except Exception as e:
+                print("error parsing {} in basic-ac-db.json {}".format(line,e))
         """
-        loggit("\nbasic AC database")
-        counter = 0
-        with open('basic-ac-db.json') as f:
-            while True:
-                global aircraft_data_map
-                try:
-                    counter = counter + 1
-                    line = f.readline()
-                    if not line:
-                        break
-                    ac = json.loads(line)
-                    ac_data = [ ac["reg"],ac["icao"],ac["manufacturer"],ac["model"]]
-                    aircraft_data_map[ac['icao']] = ac_data
-                    if not(counter % 1000):
-                        print(".",end='',flush=True)
-                except Exception as e:
-                    print("error parsing {} in basic-ac-db.json {}".format(line,e))
-         """
             
     
         
@@ -166,13 +168,14 @@ def update_reference_data():
             loggit(txt)
 """
 
-
+"""
+Superceded by add_tail_and_type_2
 def add_tail_and_type(icao,plane):
     # find the tail, plane type and route
     reg = None
     ptype = None
-    global conn_base
-    global adsbex_cache
+    # global conn_base
+    # global adsbex_cache
     the_hex = icao.strip().upper()
     # lookup in Basestation.sqb
     try:
@@ -206,7 +209,7 @@ def add_tail_and_type(icao,plane):
             ptype = txt[1]
             answer = adsbex_cache.execute("UPDATE cache SET seen = seen + 1 WHERE hex = '{}'".format(the_hex))
             adsbex_cache.commit()
-    
+
     # if we've never been able to find data on this hex value beofre we store it in unknown planes so we wont try and look it up again    
     if reg is None:
         try:
@@ -242,7 +245,7 @@ def add_tail_and_type(icao,plane):
     if reg is None:
         loggit("could not find tail for {}".format(the_hex),BOTH,RED_TEXT)
         reg,ptype = add_to_unknown_planes(icao)
-        
+
     if reg is not None:
         plane['tail'] = reg
     if ptype is not None:
@@ -252,11 +255,11 @@ def add_tail_and_type(icao,plane):
     #loggit("enriched result {} {}".format(icao , reg),TO_SCREEN)
 
     return reg
+"""
 
-    
-
-def add_route(icao,plane):
-    global conn
+def add_route(plane):
+    """ Add the route from the flight data """
+    #global conn
     if 'flight' not in plane:
         return
     answer = conn.execute("SELECT FromAirportName,ToAirportName  FROM RouteView WHERE Callsign = '%s'" % plane['flight'].strip() )
@@ -267,6 +270,7 @@ def add_route(icao,plane):
         plane['route'] = route
 
 def add_tail_and_type_2(icao,plane):
+    """ look up the tail from icao hex """
     answer = consolidated_data.lookup(icao)
     if answer is None:
         return None
@@ -275,8 +279,9 @@ def add_tail_and_type_2(icao,plane):
     return answer
 
 def add_reference_data(icao,plane):
+    """ look up the tail from icao hex , and route data if known"""
     result = add_tail_and_type_2(icao,plane)
-    if result is None:
+    if result is None and '~' not in icao:
         loggit("add_reference_data no tail found {}".format(icao),BOTH,RED_TEXT )
 
     if 'route' not in plane:

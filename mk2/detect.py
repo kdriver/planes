@@ -1,18 +1,23 @@
+"""  A program to detect planes and tweet """
+
 import json
 import time
+import math
+import os
+import zipfile
 import sqldb
 import say
-import math
+
 import requests
-import os
+
 from vrs import Vrs
 from loggit import loggit
-from loggit import BOTH as BOTH
-from loggit import TO_FILE as TO_FILE
-from loggit import TO_FILE as TO_SCREEN
-from loggit import GREEN_TEXT as GREEN_TEXT
-from loggit import YELLOW_TEXT as YELLOW_TEXT
-from loggit import CYAN_TEXT as CYAN_TEXT
+from loggit import BOTH
+from loggit import TO_SCREEN
+from loggit import TO_FILE
+from loggit import GREEN_TEXT
+from loggit import YELLOW_TEXT
+from loggit import CYAN_TEXT
 #from loggit import RED_TEXT as RED_TEXT
 from Haversine import Haversine
 from reference_data import update_reference_data
@@ -25,8 +30,7 @@ from kml import kml_doc
 from kml import write_kmz
 from kml import three_d_vrs
 from my_queue import my_queue
-from my_queue import  INFINATE as INFINATE
-import zipfile
+from my_queue import  INFINATE
 from home import home
 
 
@@ -41,25 +45,29 @@ dump_time = 0
 
 
 def get_time(clock=time.time()):
+    """ Return an ascii string of the current time """
     answer = time.asctime(time.localtime(clock))
     return answer
 
 
-def enrich(icao, plane):
-    result = add_reference_data(icao, plane)
-    # if there is a tilde in the icao and we could not resolve it, then in 60 seconds dump the planes
+def enrich(icao_hex, the_plane):
+    """ Given the icao hex for the plane, enrich the plane data from reference data """
+    result = add_reference_data(icao_hex, the_plane)
+    # A tilde in the hex indicates a TIS-B record 
+    # Dumping planes around the record gives a chance to see which plane it is
     if result is None:
         loggit("could not enrich plane")
-    if result is None and '~' in icao:
-        loggit("found tilde in icao , trigger a dump of planes around {}".format(icao))
+    if result is None and '~' in icao_hex:
+        # loggit("found tilde in icao , trigger a dump of planes around {}".format(icao))
         global dump_time, dump_icao, dump_planes
         dump_time = time.time() + 60
-        dump_icao = icao
+        dump_icao = icao_hex
         dump_planes = True
-    plane['enriched'] = 1
+    the_plane['enriched'] = 1
 
 
 def get_place(clat, clon):
+    """ Use the Open Street Map API to look up the nearest place"""
     place = "unknown"
     try:
         req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(
@@ -74,42 +82,43 @@ def get_place(clat, clon):
         loggit("could not access OSM API {} ".format(e))
 
     return place[0:90]
-            
     
-def nearest_point(plane):
-    #if 'miles' in plane:
-    #    loggit("nearest point for {} is {} miles".format(plane['icao'],plane['miles'],BOTH))
+def nearest_point(the_plane):
+    """ The plane has reached the nearest point to HOM, 
+    so collect the report data, print it and insert it into the sql database
+    Also write out the kml file with tracked path.
+    and if its within TWEET_RADIUS - tweet it too """
 
-    pd = "{} -> nearest   {} ".format(get_time(plane["closest_time"]),plane['icao'])
+    pd = "{} -> nearest   {} ".format(get_time(the_plane["closest_time"]),the_plane['icao'])
     for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
-        if item in plane and plane[item] is not None:
+        if item in the_plane and the_plane[item] is not None:
             if item in {'closest_miles','track'}:
-                pd = pd + " {:>7.2f} ".format(plane[item])
+                pd = pd + " {:>7.2f} ".format(the_plane[item])
             elif  item in {'flight','tail','alt_baro'}:
-                pd = pd + "{0:7} ".format(plane[item])
+                pd = pd + "{0:7} ".format(the_plane[item])
             else:
-                pd = pd + " {:<} ".format(plane[item])
+                pd = pd + " {:<} ".format(the_plane[item])
         else:
             if item in ['closest_miles','track','alt_baro']:
-                plane[item] = 0
-            else: 
-                plane[item] = "unknown"
+                the_plane[item] = 0
+            else:
+                the_plane[item] = "unknown"
 
     try:
-        sqldb.insert_data((time.time(),plane["flight"],plane["icao"],plane["tail"],plane['plane'],plane["alt_baro"],plane["track"],plane["closest_miles"],plane["closest_lat"],plane["closest_lon"]))
+        sqldb.insert_data((time.time(),the_plane["flight"],the_plane["icao"],the_plane["tail"],the_plane['plane'],the_plane["alt_baro"],the_plane["track"],the_plane["closest_miles"],the_plane["closest_lat"],the_plane["closest_lon"]))
     except Exception as e:
         loggit("could not insert data iinto planes record {}".format(e))
 
     name=''
-    if 'tail' in plane:
-        name=plane['tail']
+    if 'tail' in the_plane:
+        name=the_plane['tail']
     else:
         name='unknown'
 
-    if 'alt_baro' not in plane:
-        plane["alt_baro"] = "0"
+    if 'alt_baro' not in the_plane:
+        the_plane["alt_baro"] = "0"
 
-    kml_text = kml_doc(plane['closest_lon'],plane['closest_lat'],  -1.9591988377888176,50.835736602072664, plane["alt_baro"],name,plane['closest_miles'],plane["tracks"])
+    kml_text = kml_doc(the_plane['closest_lon'],the_plane['closest_lat'],  -1.9591988377888176,50.835736602072664, the_plane["alt_baro"],name,the_plane['closest_miles'],the_plane["tracks"])
     #redo_miles = Haversine()
     #with open("kmls/{}.kml".format(name),"w") as f:
     #    f.write(kml_text)
@@ -119,7 +128,7 @@ def nearest_point(plane):
         zf.close()
 
 
-    if 'expired' in plane:
+    if 'expired' in the_plane:
         pd = pd + ' expired '
 
     linelen=145
@@ -127,56 +136,57 @@ def nearest_point(plane):
     if len(pd) < 145:
         pd =  pd +" "*(linelen-len(pd))
 
-    place = get_place(plane['closest_lat'],plane['closest_lon'])
+    place = get_place(the_plane['closest_lat'],the_plane['closest_lon'])
 
-    plane['reported'] = 1
+    the_plane['reported'] = 1
 
     try:
-            if 'miles' in plane:
-                if plane['miles'] < TWEET_RADIUS:
-                    tweet(pd)
-                    pd = pd + " : " + place
-                    loggit(pd,BOTH,GREEN_TEXT)
-                    txt = "plane overhead "
-                    if 'Owner' in plane:
-                        txt = txt + " " + plane['Owner']
-                    m = int(plane['miles'])
+        if 'miles' not in the_plane:
+            pd = pd + " " + json.dumps(the_plane)
+            loggit(pd,BOTH,CYAN_TEXT)
+            return
 
-                    if 'alt_baro' in plane:
-                        if plane['alt_baro'] != 'ground':
-                            h = math.floor(int(plane['alt_baro'])/100)
-                            if h > 9:
-                                txt = txt + " at " + str(h/10) + " thousand feet"
-                            else:
-                                txt = txt + " at " + str(h) + " hundred feet"
+        if the_plane['miles'] < TWEET_RADIUS:
+            tweet(pd)
+            pd = pd + " : " + place
+            loggit(pd,BOTH,GREEN_TEXT)
+            txt = "the_plane overhead "
+            if 'Owner' in the_plane:
+                txt = txt + " " + the_plane['Owner']
+            m = int(the_plane['miles'])
+
+            if 'alt_baro' in the_plane:
+                if the_plane['alt_baro'] != 'ground':
+                    h = math.floor(int(the_plane['alt_baro'])/100)
+                    if h > 9:
+                        txt = txt + " at " + str(h/10) + " thousand feet"
                     else:
-                        txt = txt + " on ground"
-
-                    txt = txt + " distance {:>1.1f} miles".format(m)
-                    say.speak(txt)
-                else:
-                    pd = pd + " : " + place
-                    if 'plane' in plane:
-                        if 'DA42' in plane['plane']: 
-                            loggit(pd,BOTH,YELLOW_TEXT)
-                        else:
-                            loggit(pd,BOTH,CYAN_TEXT)
-                            #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+                        txt = txt + " at " + str(h) + " hundred feet"
             else:
-                pd = pd + " " + json.dumps(plane)
-                loggit(pd,BOTH,CYAN_TEXT)
-                #loggit("{}".format(plane["tracks"].get_values()),BOTH,CYAN_TEXT)
+                txt = txt + " on ground"
+
+            txt = txt + " distance {:>1.1f} miles".format(m)
+            say.speak(txt)
+        else:
+            pd = pd + " : " + place
+            if 'plane' in the_plane:
+                if 'DA42' in the_plane['plane']: 
+                    loggit(pd,BOTH,YELLOW_TEXT)
+                else:
+                    loggit(pd,BOTH,CYAN_TEXT)
+                    #loggit("{}".format(the_plane["tracks"].get_values()),BOTH,CYAN_TEXT)
     except Exception as e:
-             loggit("reporting failed {}".format(e))
+        loggit("reporting failed {}".format(e))
 
 
 """
-Read the file produced by dump1090 and cache each plane seen so we can track its position reletive to home
+Read the file produced by dump1090 and cache each the_plane seen so we can track its position reletive to home
 and check if it gets close.
 """
 
 
 def read_planes():
+    """ read in the planes from dump1090 and cache the data """
     try:
         with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
             try:
@@ -237,7 +247,11 @@ def read_planes():
                             this_plane['max_lat'] = this_plane['lat']
                             if isinstance(this_plane["alt_baro"], int):
                                 vrs.update_entry(
-                                    bearing, this_plane["lat"], this_plane["lon"], this_plane["alt_baro"], miles, this_plane["icao"])
+                                    bearing, this_plane["lat"], 
+                                    this_plane["lon"], 
+                                    this_plane["alt_baro"], 
+                                    miles, 
+                                    this_plane["icao"])
 
                     except Exception as e:
                         print("oh dear haversine {} {}".format(
@@ -254,12 +268,13 @@ def read_planes():
         print(" error in read_planes {}\n".format(e))
 
 
-def dump_the_planes(icao):
-    loggit("Dump planes with similar distance to {}".format(icao))
-    if icao not in all_planes:
-        loggit("could not find {} in all_planes".format(icao))
+def dump_the_planes(icao_hex):
+    """Called to dump planes with similar height and distance"""
+    loggit("Dump planes with similar distance to {}".format(icao_hex))
+    if icao_hex not in all_planes:
+        loggit("could not find {} in all_planes".format(icao_hex))
         return
-    target = all_planes[icao]
+    target = all_planes[icao_hex]
 
     if 'miles' not in target:
         loggit("could not find 'miles' in all_planes")
@@ -270,12 +285,12 @@ def dump_the_planes(icao):
         return
 
     ll_target = [target['lat'], target['lon']]
-    distance = int(target['miles'])
+    # distance = int(target['miles'])
     alt = int(target['alt_baro'])
     # loggit("Dump icao {} distance {}, {}".format(icao, distance, json.dumps(target, indent=4)))
     target_time = target['touched']
-    for plane in all_planes:
-        this_plane = all_planes[plane]
+    for the_plane in all_planes:
+        this_plane = all_planes[the_plane]
         proximity = 100
         if 'lat' in this_plane and 'lon' in this_plane:
             ll_this = [this_plane['lat'], this_plane['lon']]
@@ -309,8 +324,8 @@ while 1:
     read_planes()
     delete_list = []
     now = time.time()
-    for icao in all_planes:
-        if (now - all_planes[icao]['touched']) > 60:
+    for icao,record in all_planes.items():
+        if (now - record['touched']) > 60:
             delete_list.append(icao)
 
     for plane in delete_list:

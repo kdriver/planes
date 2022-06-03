@@ -1,4 +1,4 @@
-
+""" A generic logging Service """
 TO_SCREEN=1
 TO_FILE=2
 TO_DEBUG=4
@@ -19,12 +19,14 @@ RED="\033[1;31m"
 GREEN="\033[1;32m"
 CYAN="\033[1;36m"
 CLEAR="\033[0m"
-colour_map = { GREEN_TEXT : GREEN, RED_TEXT : RED , CYAN_TEXT : CYAN , YELLOW_TEXT : YELLOW , None : '' }
+colour_map = { GREEN_TEXT : GREEN, RED_TEXT : RED ,
+                CYAN_TEXT : CYAN , YELLOW_TEXT : YELLOW , None : '' }
 
-log = open("output.txt","a")
-dlog = open("/tmp/debug.txt","w")
+log = open("output.txt","a",encoding="utf-8")
+dlog = open("/tmp/debug.txt","w",encoding="utf-8")
 
 def loggit(text,to=BOTH,col=None):
+    """ A function t provide generic logging to file and screen """
     prefix=''
     suffix=CLEAR
 
@@ -53,5 +55,3 @@ def loggit(text,to=BOTH,col=None):
 
     if (to & TO_SCREEN) == TO_SCREEN:
         print(str(text))
-
-

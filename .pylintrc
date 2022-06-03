@@ -1,0 +1,5 @@
+# .pylintrc
+
+[MASTER]
+
+disable=consider-using-f-string,invalid-name,broad-except,bare-except,global-statement,unspecified-encoding,line-too-long
