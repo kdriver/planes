@@ -227,8 +227,7 @@ class DataService:
                         self.handle.commit()
                 except Exception as e:
                     loggit("error parsing in basic-ac-db.json {} json is {} ".format(e,line),TO_FILE)
-                    errors = errors + 1
-                    
+                    errors = errors + 1                  
             loggit("\nfinished parsing basic-ac-db.json {} records. {} inserts , {} updates {} errors ".format(counter,inserts,updates,errors))       
         # commit the changes / insertions we made
         self.handle.commit()

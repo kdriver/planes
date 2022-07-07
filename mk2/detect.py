@@ -55,14 +55,15 @@ def enrich(icao_hex, the_plane):
     result = add_reference_data(icao_hex, the_plane)
     # A tilde in the hex indicates a TIS-B record 
     # Dumping planes around the record gives a chance to see which plane it is
-    if result is None:
-        loggit("could not enrich plane")
+    if result is None and '~' not in icao_hex:
+        loggit("could not enrich plane {}".format(icao_hex))
+        return
     if result is None and '~' in icao_hex:
         # loggit("found tilde in icao , trigger a dump of planes around {}".format(icao))
         global dump_time, dump_icao, dump_planes
         dump_time = time.time() + 60
         dump_icao = icao_hex
-        dump_planes = True
+        dump_planes = False
     the_plane['enriched'] = 1
 
 
@@ -316,6 +317,7 @@ init_reference_data()
 update_reference_data()
 start_webserver()
 last_tick = time.time()
+last_log = last_tick
 sqldb.attach_sqldb()
 vrs = Vrs("vrs_data.sqb")
 
@@ -355,9 +357,12 @@ while 1:
 
     # every 60 seconds
     if (now - last_tick) > 60:
-        loggit("{} planes being tracked ".format(len(all_planes)), TO_SCREEN)
-        last_tick = now
         #   write out a kml file with all the t planes we can see
         three_d_vrs(all_planes)
+        if (now - last_log) > 300:
+            loggit("{} planes being tracked ".format(len(all_planes)), TO_SCREEN)
+            last_log = now
+        last_tick = now
+
 
     time.sleep(5)

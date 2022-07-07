@@ -120,7 +120,7 @@ def init_reference_data():
             
     
         
-        loggit("Connected to databases")
+    loggit("Connected to databases")
 
 def update_reference_data():
     global last_updated,conn,conn_base
@@ -285,7 +285,7 @@ def add_reference_data(icao,plane):
         loggit("add_reference_data no tail found {}".format(icao),BOTH,RED_TEXT )
 
     if 'route' not in plane:
-        add_route(icao,plane)
+        add_route(plane)
     return result
 
 
