@@ -81,6 +81,7 @@ def get_place(clat, clon):
             place = "somewhere"
     except Exception as e:
         loggit("could not access OSM API {} ".format(e))
+        return None
 
     return place[0:90]
     
@@ -128,7 +129,6 @@ def nearest_point(the_plane):
         zf.writestr("{}.kml".format(name),kml_text)
         zf.close()
 
-
     if 'expired' in the_plane:
         pd = pd + ' expired '
 
@@ -138,6 +138,9 @@ def nearest_point(the_plane):
         pd =  pd +" "*(linelen-len(pd))
 
     place = get_place(the_plane['closest_lat'],the_plane['closest_lon'])
+
+    if place is None:
+        place = " API failed "
 
     the_plane['reported'] = 1
 

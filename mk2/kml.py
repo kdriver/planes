@@ -1,4 +1,5 @@
 import zipfile
+import time
 from my_queue import my_queue
 from loggit import loggit
 from home import home
@@ -149,14 +150,22 @@ def three_d_vrs(all_planes):
 
 def write_kmz(h, p):
     if 'tail' in p and 'closest_miles' in p and 'reported' in p:
-        name = p['tail']
+        name = p['tail']+'_'+p['icao']
         if p['closest_miles'] < 50:
             doc = kml_doc(h[0], h[1], p['closest_lon'], p['closest_lat'],
                       p['closest_alt'], p['tail'], p['closest_miles'], p['tracks'])
             # loggit("write {}_f.kmz".format(name))
+            if '~' in p['icao']:
+              return
             with zipfile.ZipFile("kmls/{}_f.kmz".format(name), "w") as zf:
-                zf.writestr("{}.kml".format(name), doc)
-                zf.close()
+              zf.writestr("{}.kml".format(name), doc)
+              zf.close()
+
+            tstamp = time.asctime().replace(' ','_').replace(':','_')
+
+            with zipfile.ZipFile("/mnt/usb_stick/kmls/{}_f.kmz".format(name+'_'+tstamp), "w") as zf:
+              zf.writestr("{}.kml".format(name), doc)
+              zf.close()
 
 
 if __name__ == "__main__":

@@ -49,11 +49,11 @@ def add_to_unknown_planes(icao):
 def blackswan_lookup(icao):
     global counter
     if '~' in icao:
-        print("~ detected in icao - dont lookup in blackswan" )
+        loggit("~ detected in icao - dont lookup in blackswan" )
         return(None,None)
 
     try:
-        print('Lookup {} in blackswan'.format(icao))
+        loggit('Lookup {} in blackswan'.format(icao))
         counter = counter + 1
         r = requests.get('https://blackswan.ch/aircraft/{}'.format(icao))
         page= r.text
@@ -66,7 +66,7 @@ def blackswan_lookup(icao):
         in_seconds = the_diff.total_seconds()
         in_days = in_seconds/(60*60*24)
         requests_per_day = counter/in_days
-        print("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
+        loggit("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
 
         if reg == None or model == None:
             loggit("blackswan has no data for {}".format(icao))

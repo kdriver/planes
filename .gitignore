@@ -134,3 +134,8 @@ mk2/.DS_Store
 mk2/basic-ac-db.json
 mk2/test.db
 *.tmp
+mk2/read_socket.py
+mk2/cron.out
+mk2/routes.tsv.gz.1
+G-FDZB_f.kmz
+G-FDZB.kmz
