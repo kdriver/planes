@@ -6,7 +6,7 @@ from loggit import loggit
 
 counter=0
 start_time=datetime.now()
-
+"""
 def add_to_unknown_planes(icao):
     global counter
     if '~' in icao:
@@ -44,7 +44,7 @@ def add_to_unknown_planes(icao):
     except Exception as e:
         loggit('could not add plane  {} to unknown planes database : {}'.format(icao,e))
         return (None,None)
-
+"""
 
 def blackswan_lookup(icao):
     global counter
@@ -53,9 +53,12 @@ def blackswan_lookup(icao):
         return(None,None)
 
     try:
-        loggit('Lookup {} in blackswan'.format(icao))
+ 
         counter = counter + 1
-        r = requests.get('https://blackswan.ch/aircraft/{}'.format(icao))
+        the_url = f'https://blackswan.ch/aircraft/{icao}'
+        loggit(f'Lookup {icao} in blackswan {the_url}')
+
+        r = requests.get(the_url)
         page= r.text
         soup = BeautifulSoup(page,"html.parser")
         reg = soup.find("td" ,attrs={"data-target" :"reg"})
@@ -76,5 +79,5 @@ def blackswan_lookup(icao):
             modelt = model.text
             return (regt,modelt)
     except Exception as e:
-        loggit('could not add plane  {} to unknown planes database : {}'.format(icao,e))
+        loggit(f'could not find plane  {icao} in blackswan , exception : {e}')
         return (None,None)

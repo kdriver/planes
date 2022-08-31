@@ -1,5 +1,6 @@
 import zipfile
 import time
+import os
 from my_queue import my_queue
 from loggit import loggit
 from home import home
@@ -157,21 +158,25 @@ def write_kmz(h, p):
             # loggit("write {}_f.kmz".format(name))
             if '~' in p['icao']:
               return
-            with zipfile.ZipFile("kmls/{}_f.kmz".format(name), "w") as zf:
-              zf.writestr("{}.kml".format(name), doc)
-              zf.close()
+            with zipfile.ZipFile("kmls/{}_f.kmz".format(name), "w") as zip_file:
+              zip_file.writestr("{}.kml".format(name), doc)
+              zip_file.close()
 
             tstamp = time.asctime().replace(' ','_').replace(':','_')
+            daystr = "/mnt/usb_stick/kmls/" + time.strftime("%d-%b-%Y")
 
-            with zipfile.ZipFile("/mnt/usb_stick/kmls/{}_f.kmz".format(name+'_'+tstamp), "w") as zf:
-              zf.writestr("{}.kml".format(name), doc)
-              zf.close()
+            if os.path.exists(daystr) is False:
+              os.mkdir(daystr)
+              
+            with zipfile.ZipFile(f"{daystr}/{name}__{tstamp}_f.kmz", "w") as zip_file:
+              zip_file.writestr(f"{name}.kml", doc)
+              zip_file.close()
 
 
 if __name__ == "__main__":
 
     p1 = [-2.00790, 50.814423]
-    tracks = my_queue(500)
+    tracks = my_queue(500)                                                                                                                               
     tlon = home[0]
     tlat = home[1]
     for point in range(0, 10, 1):

@@ -6,10 +6,12 @@ import csv
 import subprocess
 import json
 import sys
+import requests
 
 import adsbex_query
+from bs4 import BeautifulSoup
+from datetime import datetime
 
-from add_to_unknown import blackswan_lookup as blackswan_lookup
 
 from loggit import loggit
 from loggit import TO_FILE, TO_SCREEN, BOTH, TO_DEBUG
@@ -27,6 +29,8 @@ class DataService:
     """
     create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer, looked_up integer); """
     cols = "  hex , tail , type , seen  , looked_up"
+    counter=0
+    start_time=datetime.now()
 
     def __init__(self, data_file):
         try:
@@ -38,9 +42,9 @@ class DataService:
             self.handle.commit()
             # self.refresh_external_data()
             # self.update_local_cache()
-        except Exception as e:
-            print(e)
-            print("Could not open database {}".format(data_file))
+        except Exception as my_e:
+            print(my_e)
+            print(f"Could not open database {data_file}")
             sys.exit(1)
 
     def update_the_cache(self):
@@ -56,6 +60,41 @@ class DataService:
         loggit(val)
 
         return val
+
+    def blackswan_lookup(icao):
+        if '~' in icao:
+            loggit("~ detected in icao - dont lookup in blackswan" )
+            return(None,None)
+
+        try:
+    
+            counter = counter + 1
+            the_url = f'https://blackswan.ch/aircraft/{icao}'
+            loggit(f'Lookup {icao} in blackswan {the_url}')
+
+            r = requests.get(the_url)
+            page= r.text
+            soup = BeautifulSoup(page,"html.parser")
+            reg = soup.find("td" ,attrs={"data-target" :"reg"})
+            #model = soup.find("td" ,attrs={"data-target" :"model"}).text
+            model = soup.find("td" ,attrs={"data-target" :"type"})
+            instant = datetime.now()
+            the_diff = instant - DataService.start_time
+            in_seconds = the_diff.total_seconds()
+            in_days = in_seconds/(60*60*24)
+            requests_per_day = counter/in_days
+            loggit("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
+
+            if reg is None or model is None:
+                loggit(f"blackswan has no data for {icao}")
+                return(None,None)
+            else:
+                regt = reg.text
+                modelt = model.text
+                return (regt,modelt)
+        except Exception as my_e:
+            loggit(f'could not find plane  {icao} in blackswan , exception : {my_e}')
+            return (None,None)
 
 
     def lookup(self, icao, remote_lookup=True):
@@ -100,7 +139,7 @@ class DataService:
                 return row
             loggit("{} Not found in ADSB exchange API".format(icao),BOTH)
             try:
-                blackswan = blackswan_lookup(the_hex)
+                blackswan = self.blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
                     row = (blackswan[0], blackswan[1])
                     data = {
@@ -209,17 +248,6 @@ class DataService:
                         # missing data - so insert it
                         self.insert(ac_data)
                         inserts = inserts + 1
-                    """
-		    Dont use this data as he master reference - it seemslike mostly StandingData and Blackswan agree where there is a difference, so this must be less reliable
-                    else:
-                        # if local_data[TAIL] != ac_data["tail"] or local_data[TYPE] != ac_data["model"]:
-			#   only update the data if the tail number is different. Otherwise we end up changing for the sake of it.
-                        if local_data[TAIL] != ac_data["tail"]:
-                            loggit("Basic Data tail diff {} local {} standing {}".format(icao,local_data,ac_data),TO_DEBUG)
-                            # update the record
-                            self.update(ac_data)
-                            updates = updates + 1
-                    """
 
                     if not(counter % 50000):
                         loggit("interim {} records. {} inserts , {} updates {} errors \r".format(counter,inserts,updates,errors),BOTH) 

@@ -293,7 +293,7 @@ def dump_the_planes(icao_hex):
     alt = int(target['alt_baro'])
     # loggit("Dump icao {} distance {}, {}".format(icao, distance, json.dumps(target, indent=4)))
     target_time = target['touched']
-    for the_plane in all_planes:
+    for the_plane,a_plane in all_planes.items():
         this_plane = all_planes[the_plane]
         proximity = 100
         if 'lat' in this_plane and 'lon' in this_plane:
