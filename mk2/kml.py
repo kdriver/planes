@@ -168,7 +168,7 @@ def write_kmz(h, p):
             if os.path.exists(daystr) is False:
               os.mkdir(daystr)
               
-            with zipfile.ZipFile(f"{daystr}/{name}__{tstamp}_f.kmz", "w") as zip_file:
+            with zipfile.ZipFile(f"{daystr}/{name}--{tstamp}_f.kmz", "w") as zip_file:
               zip_file.writestr(f"{name}.kml", doc)
               zip_file.close()
 
