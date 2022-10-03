@@ -37,15 +37,6 @@ def loggit(text,to_log=BOTH,col=None):
     prefix=''
     suffix=CLEAR
 
-    # if col == YELLOW_TEXT:
-    #     prefix=YELLOW
-    # if col == GREEN_TEXT:
-    #     prefix=GREEN
-    # if col == RED_TEXT:
-    #     prefix=RED
-    # if col == CYAN_TEXT:
-    #     prefix=CYAN
-
     prefix = colour_map[col]
 
     if ( to_log & TO_DEBUG ) == TO_DEBUG:

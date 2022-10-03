@@ -15,7 +15,7 @@ from vrs import Vrs
 from loggit import loggit,init_loggit
 from loggit import BOTH
 from loggit import TO_SCREEN
-from loggit import TO_FILE
+# from loggit import TO_FILE
 from loggit import GREEN_TEXT
 from loggit import YELLOW_TEXT
 from loggit import CYAN_TEXT
@@ -184,10 +184,10 @@ def nearest_point(the_plane):
         loggit("reporting failed {}".format(e))
 
 
-"""
-Read the file produced by dump1090 and cache each the_plane seen so we can track its position reletive to home
-and check if it gets close.
-"""
+
+# Read the file produced by dump1090 and cache each the_plane seen so we can track its position reletive to home
+# and check if it gets close.
+
 
 
 def read_planes():
@@ -196,7 +196,7 @@ def read_planes():
         with open('/var/run/dump1090-fa/aircraft.json', 'r') as f:
             try:
                 data = json.load(f)
-            except:
+            except Exception:
                 print("error - can't open aircraft.json")
 
             global all_planes
@@ -294,7 +294,7 @@ def dump_the_planes(icao_hex):
     alt = int(target['alt_baro'])
     # loggit("Dump icao {} distance {}, {}".format(icao, distance, json.dumps(target, indent=4)))
     target_time = target['touched']
-    for the_plane,a_plane in all_planes.items():
+    for the_plane,_a_plane in all_planes.items():
         this_plane = all_planes[the_plane]
         proximity = 100
         if 'lat' in this_plane and 'lon' in this_plane:
@@ -315,6 +315,7 @@ def dump_the_planes(icao_hex):
             txt = txt + ",tdiff:'{:.2f}', tn:'{}' ".format(
                 (target_time - this_plane['touched']), get_time()) + "},"
             loggit(txt)
+
 
 init_loggit("output.txt","/tmp/debug.txt")
 init_reference_data()

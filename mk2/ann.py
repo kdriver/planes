@@ -6,7 +6,7 @@
 # use: ./ghome_say [ghome_ip] [text_to_say]
 #
 #
-
+import socket
 import sys
 import pychromecast
 import os
@@ -19,7 +19,7 @@ ip=sys.argv[1];
 say=sys.argv[2];
 
 #********* retrieve local ip of my rpi3
-import socket
+
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 local_ip=s.getsockname()[0]
@@ -34,13 +34,13 @@ vol_prec=castdevice.status.volume_level
 castdevice.set_volume(0.0) #set volume 0 for not hear the BEEEP
 
 try:
-       os.mkdir("/var/www/html/mp3_cache/")
-except:
-       pass
+    os.mkdir("/var/www/html/mp3_cache/")
+except Exception:
+    pass
 
 if not os.path.isfile("/var/www/html/mp3_cache/"+fname):
-          tts = gTTS(say,lang='en')
-          tts.save("/var/www/html/mp3_cache/"+fname)
+    tts = gTTS(say,lang='en')
+    tts.save("/var/www/html/mp3_cache/"+fname)
 
 mc = castdevice.media_controller
 mc.play_media("http://"+local_ip+"/mp3_cache/"+fname, "audio/mp3")
@@ -56,7 +56,7 @@ time.sleep(0.2)
 mc.play() #play the mp3
 
 while not mc.status.player_is_idle:
-       time.sleep(0.5)
+    time.sleep(0.5)
 
 mc.stop()
 

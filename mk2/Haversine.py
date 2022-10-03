@@ -1,6 +1,7 @@
-import math
+""" Calculate the distance around the globe between two points"""
+# import math
 from math import radians, cos, sin, asin, sqrt,degrees,atan2,atan
-from geographiclib.geodesic import Geodesic
+# from geographiclib.geodesic import Geodesic
 #from numpy import arctan2,sin,cos,degrees
 
 
@@ -33,7 +34,6 @@ class Haversine:
         self.bearing = deg
         # print("Bearing {}".format(self.bearing))
         # self.get_bearing(coord1,coord2)
-        return
 
     def get_bearing(self,coord1,coord2):
         lon1,lat1=coord1
@@ -49,20 +49,18 @@ class Haversine:
         return angle
 
 
-
-
-
 def h3( lon1,lat1,lon2,lat2 ):
-      R = 3959.87433 # this is in miles.  For Earth radius in kilometers use 6372.8 km
-      dLat = radians(lat2 - lat1)
-      dLon = radians(lon2 - lon1)
-      lat1 = radians(lat1)
-      lat2 = radians(lat2)
+    R = 3959.87433 # this is in miles.  For Earth radius in kilometers use 6372.8 km
+    dLat = radians(lat2 - lat1)
+    dLon = radians(lon2 - lon1)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
 
-      a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
-      c = 2*asin(sqrt(a))
+    a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
+    c = 2*asin(sqrt(a))
 
-      return R * c
+    return R * c
+
 
 # lon(-1.95) , lat (50.xx)
 home=[ -1.9591988377888176,50.835736602072664]
@@ -96,7 +94,7 @@ def test1():
 
     hv = Haversine(home,nnw)
     
-    # print("south {}".format(hv.bearing))
+    print("south {}".format(hv.bearing))
     # hv = Haversine(home,north)
     # print("north {}".format(hv.bearing))
     # hv = Haversine(home,west)

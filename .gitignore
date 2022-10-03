@@ -111,7 +111,6 @@ monitor.txt
 *.sqb
 *.gz
 *tsv
-*csv
 *.txt
 *.ico
 mk2/.DS_Store
@@ -141,3 +140,4 @@ G-FDZB_f.kmz
 G-FDZB.kmz
 mk2/ren.py
 mk2/l.py
+

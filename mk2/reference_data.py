@@ -3,10 +3,11 @@ import subprocess
 
 import sqlite3
 import os
-import csv
+import sys
+# import csv
 import time
 from loggit import loggit
-from loggit import TO_FILE,TO_SCREEN
+# from loggit import TO_FILE,TO_SCREEN
 from loggit import BOTH
 from loggit import RED_TEXT 
 from data_service import DataService
@@ -84,10 +85,10 @@ def init_reference_data():
     loggit("Base station ")
     conn_base = sqlite3.connect('./BaseStation.sqb')
     loggit("ModeS list ")
-    modes_file = open("./modes.tsv")
-    read_tsv = csv.reader(modes_file,delimiter='	')
+    # modes_file = open("./modes.tsv")
+    # read_tsv = csv.reader(modes_file,delimiter='	')
     modes_map={}
-    counter=0
+    # counter=0
     # for row in read_tsv:
     #     try:
     #         modes_map[row[2]] = row[4]
@@ -96,28 +97,26 @@ def init_reference_data():
     #         pass
     #     if not(counter % 1000):
     #         print(".",end='',flush=True)
-    """
-    loggit("\nbasic AC database")
-    counter = 0
-    with open('basic-ac-db.json') as f:
-        while True:
-            global aircraft_data_map
-            try:
-                counter = counter + 1
-                line = f.readline()
-                if not line:
-                    break
-                ac = json.loads(line)
-                ac_data = [ ac["reg"],ac["icao"],ac["manufacturer"],ac["model"]]
-                aircraft_data_map[ac['icao']] = ac_data
-                if not(counter % 1000):
-                    print(".",end='',flush=True)
-            except Exception as e:
-                print("error parsing {} in basic-ac-db.json {}".format(line,e))
-        """
-            
+ 
+    # loggit("\nbasic AC database")
+    # counter = 0
+    # with open('basic-ac-db.json') as f:
+    #     while True:
+    #         global aircraft_data_map
+    #         try:
+    #             counter = counter + 1
+    #             line = f.readline()
+    #             if not line:
+    #                 break
+    #             ac = json.loads(line)
+    #             ac_data = [ ac["reg"],ac["icao"],ac["manufacturer"],ac["model"]]
+    #             aircraft_data_map[ac['icao']] = ac_data
+    #             if not(counter % 1000):
+    #                 print(".",end='',flush=True)
+    #         except Exception as e:
+    #             print("error parsing {} in basic-ac-db.json {}".format(line,e))
+  
     
-        
     loggit("Connected to databases")
 
 def update_reference_data():
@@ -129,7 +128,7 @@ def update_reference_data():
             conn.close()
             conn_base.close()
             loggit("call script and try to refresh databasei {}".format(ascii_time()))
-            ans = call_command(["./update_BaseStation.sh"])
+            call_command(["./update_BaseStation.sh"])
             loggit("script returned")
             conn_base = sqlite3.connect('./BaseStation.sqb')
             conn = sqlite3.connect('./StandingData.sqb')
@@ -140,7 +139,7 @@ def update_reference_data():
             #     modes_map[row[2]] = row[4]
         except Exception as my_e:
             print(f"Complete disaster - cant update the databases {my_e} ")
-            exit()
+            sys.exit()
         loggit(f"\nupdates completed on {time.time()-tnow:.2f} seconds\n")
 
 

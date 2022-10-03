@@ -20,26 +20,27 @@ from loggit import TO_FILE, TO_SCREEN, BOTH, TO_DEBUG
 TAIL = 0
 TYPE = 1
 
-
-
 class DataService:
     """
     This class manages access to reference data so that 
     we can use the icao hex value to lookup tail, plane etc
     """
-    create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer, looked_up integer); """
+    create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  
+                      hex text, tail text,type text , seen integer, looked_up integer); """
     cols = "  hex , tail , type , seen  , looked_up"
     counter=0
     start_time=datetime.now()
 
     def __init__(self, data_file):
         try:
-            self.create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer, looked_up integer); """
+            self.create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement, 
+                                   hex text, tail text,type text , seen integer, looked_up integer); """
             self.cols = "  hex , tail , type , seen  , looked_up"
             self.handle = sqlite3.connect(data_file)
             cursor = self.handle.cursor()
             cursor.execute(self.create_text)
             self.handle.commit()
+            self.counter = 0
             # self.refresh_external_data()
             # self.update_local_cache()
         except Exception as my_e:
@@ -68,7 +69,7 @@ class DataService:
 
         try:
     
-            counter = counter + 1
+            self.counter = self.counter + 1
             the_url = f'https://blackswan.ch/aircraft/{icao}'
             loggit(f'Lookup {icao} in blackswan {the_url}')
 
@@ -78,20 +79,19 @@ class DataService:
             reg = soup.find("td" ,attrs={"data-target" :"reg"})
             #model = soup.find("td" ,attrs={"data-target" :"model"}).text
             model = soup.find("td" ,attrs={"data-target" :"type"})
-            instant = datetime.now()
-            the_diff = instant - DataService.start_time
+            the_diff = datetime.now() - DataService.start_time
             in_seconds = the_diff.total_seconds()
             in_days = in_seconds/(60*60*24)
-            requests_per_day = counter/in_days
-            loggit("{} requests total, which is {} per day after {} days".format(counter,requests_per_day,in_days)) 
+            requests_per_day = self.counter/in_days
+            loggit(f"{self.counter} requests total, which is {requests_per_day} per day after {in_days} days") 
 
             if reg is None or model is None:
                 loggit(f"blackswan has no data for {icao}")
                 return(None,None)
-            else:
-                regt = reg.text
-                modelt = model.text
-                return (regt,modelt)
+            
+            regt = reg.text
+            modelt = model.text
+            return (regt,modelt)
         except Exception as my_e:
             loggit(f'could not find plane  {icao} in blackswan , exception : {my_e}')
             return (None,None)
@@ -118,26 +118,26 @@ class DataService:
             if remote_lookup is not True:
                 return None
 
-            loggit("remote lookup {}".format(the_hex),BOTH)
+            loggit(f"remote lookup {the_hex}",BOTH)
             try:
                 adsb = adsbex_query.adsb_lookup(the_hex)
             except Exception as my_exception:
-                loggit("adsb lookup exception {}".format(my_exception), BOTH)
+                loggit(f"adsb lookup exception {my_exception}", BOTH)
                 adsb = None
 
             if adsb is not None:
                 row = (adsb['tail'], adsb['type'])
-                loggit("{} found {} in from ADSB API".format(the_hex,row),BOTH)
+                loggit(f"{the_hex} found {row} in from ADSB API",BOTH)
                 data = {
                         'tail' : adsb['tail'],
                         'model' : adsb['type'],
                         'icao_hex' : the_hex,
                         'man' : None
                         }
-                loggit("adsb exchange lookup {}".format(data), BOTH)
+                loggit(f"adsb exchange lookup {data}", BOTH)
                 self.insert(data,True)
                 return row
-            loggit("{} Not found in ADSB exchange API".format(icao),BOTH)
+            loggit(f"{icao} Not found in ADSB exchange API",BOTH)
             try:
                 blackswan = self.blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
@@ -148,16 +148,16 @@ class DataService:
                                 'icao_hex' : the_hex,
                                 'man' : None
                             }
-                    loggit("{} found {} in from blackswan API".format(the_hex,row),BOTH)
+                    loggit(f"{the_hex} found {row} in from blackswan API",BOTH)
                     self.insert(data,True)
                     return row
-                loggit("{} Not found in blackswan API".format(icao),BOTH)
+                loggit(f"{icao} Not found in blackswan API",BOTH)
 
-            except Exception as e:
-                loggit("blackswan lookup exception {}".format(e), BOTH)
+            except Exception as e_name:
+                loggit(f"blackswan lookup exception {e_name}", BOTH)
            
-        except Exception as e:
-            loggit("error looking up {} {}".format(icao, e), TO_FILE)
+        except Exception as e_name:
+            loggit(f"error looking up {icao} {e_name}", TO_FILE)
         return None
 
     def insert(self, plane_dict, commit_it=False):
@@ -194,8 +194,8 @@ class DataService:
 
     def update_from_modeS_tsv(self):
         loggit("update from ADSB ModeS tsv")
-        modes_file = open("./modes.tsv")
-        read_tsv = csv.reader(modes_file,delimiter='	')
+        with open("./modes.tsv") as modes_file:
+            read_tsv = csv.reader(modes_file,delimiter='	')
         counter=0
         inserts=0
         updates=0
