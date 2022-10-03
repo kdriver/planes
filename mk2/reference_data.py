@@ -9,11 +9,11 @@ from loggit import loggit
 from loggit import TO_FILE,TO_SCREEN
 from loggit import BOTH
 from loggit import RED_TEXT 
-from data_service import DataService as DataService
+from data_service import DataService
 
 conn=None
 conn_base=None
-adsb_cache=None
+# adsb_cache=None
 
 consolidated_data = None
 
@@ -35,29 +35,29 @@ def ascii_time():
     """ Return an ascii time string """
     return time.asctime( time.localtime(time.time()))
 
-def attach_adsbex_cache():
-    global adsbex_cache
-    try:
-        adsbex_cache = sqlite3.connect("adsbex_cache.sqb")
-        cur = adsbex_cache.cursor()
-        cur.execute(create_text)
-        adsbex_cache.commit()
-        loggit("adsbex cache attached")
-    except Exception as e:
-        print("adsbex cache exception {}".format(e))
+# def attach_adsbex_cache():
+#     global adsbex_cache
+#     try:
+#         adsbex_cache = sqlite3.connect("adsbex_cache.sqb")
+#         cur = adsbex_cache.cursor()
+#         cur.execute(create_text)
+#         adsbex_cache.commit()
+#         loggit("adsbex cache attached")
+#     except Exception as e_name:
+#         print("adsbex cache exception {}".format(e_name))
 
-attach_adsbex_cache()
+# attach_adsbex_cache()
 
 
-def insert_adsbex_cache(data_tuple):
-    global adsbex_cache
-    try:
-        cur = adsbex_cache.cursor()
-        cur.execute("INSERT INTO cache(%s) VALUES (?,?,?,?)" % cols,data_tuple)
-        adsbex_cache.commit()
-        loggit("cached in adsb_cache")
-    except Exception as e:
-        print("insert into adsbex exception {}".format(e))
+# def insert_adsbex_cache(data_tuple):
+#     global adsbex_cache
+#     try:
+#         cur = adsbex_cache.cursor()
+#         cur.execute("INSERT INTO cache(%s) VALUES (?,?,?,?)" % cols,data_tuple)
+#         adsbex_cache.commit()
+#         loggit("cached in adsb_cache")
+#     except Exception as e_name:
+#         print(f"insert into adsbex exception {e_name}")
 
 
 def call_command(command):

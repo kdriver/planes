@@ -22,36 +22,43 @@ CLEAR="\033[0m"
 colour_map = { GREEN_TEXT : GREEN, RED_TEXT : RED ,
                 CYAN_TEXT : CYAN , YELLOW_TEXT : YELLOW , None : '' }
 
-log = open("output.txt","a",encoding="utf-8")
-dlog = open("/tmp/debug.txt","w",encoding="utf-8")
 
-def loggit(text,to=BOTH,col=None):
-    """ A function t provide generic logging to file and screen """
+LOG = None
+DLOG = None
+
+def init_loggit(logging,dlogging):
+    """ Initialise logging files"""
+    global LOG,DLOG
+    LOG = open(logging,"a",encoding="utf-8")
+    DLOG = open(dlogging,"w",encoding="utf-8")
+
+def loggit(text,to_log=BOTH,col=None):
+    """ A function t provide generic logging to_log file and screen """
     prefix=''
     suffix=CLEAR
 
-    if col == YELLOW_TEXT:
-        prefix=YELLOW
-    if col == GREEN_TEXT:
-        prefix=GREEN
-    if col == RED_TEXT:
-        prefix=RED
-    if col == CYAN_TEXT:
-        prefix=CYAN
+    # if col == YELLOW_TEXT:
+    #     prefix=YELLOW
+    # if col == GREEN_TEXT:
+    #     prefix=GREEN
+    # if col == RED_TEXT:
+    #     prefix=RED
+    # if col == CYAN_TEXT:
+    #     prefix=CYAN
 
     prefix = colour_map[col]
 
-    if ( to & TO_DEBUG ) == TO_DEBUG:
-        dlog.write(str(text)+"\n")
-        dlog.flush()
+    if ( to_log & TO_DEBUG ) == TO_DEBUG:
+        DLOG.write(str(text)+"\n")
+        DLOG.flush()
 
 
-    if (to & TO_FILE) == TO_FILE:
-        log.write(str(text)+"\n")
-        log.flush()
+    if (to_log & TO_FILE) == TO_FILE:
+        LOG.write(str(text)+"\n")
+        LOG.flush()
 
     if col is not None:
         text = prefix + str(text) + suffix
 
-    if (to & TO_SCREEN) == TO_SCREEN:
+    if (to_log & TO_SCREEN) == TO_SCREEN:
         print(str(text))

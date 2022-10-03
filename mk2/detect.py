@@ -5,13 +5,14 @@ import time
 import math
 import os
 import zipfile
+import requests
 import sqldb
 import say
 
-import requests
+
 
 from vrs import Vrs
-from loggit import loggit
+from loggit import loggit,init_loggit
 from loggit import BOTH
 from loggit import TO_SCREEN
 from loggit import TO_FILE
@@ -214,8 +215,8 @@ def read_planes():
                     this_plane = all_planes[icao]
                     this_plane['touched'] = time.time()
 
-                except Exception as e:
-                    print("no icao  code in plane record {} ".format(e))
+                except Exception as e_name:
+                    print(f"no icao  code in plane record {e_name} ")
                     continue
 
                 for attr in ['lon', 'lat', 'flight', 'track', 'alt_baro']:
@@ -268,15 +269,15 @@ def read_planes():
                 if (miles - this_plane['closest_miles']) > (this_plane['closest_miles']*0.1):
                     if 'reported' not in this_plane and this_plane['closest_miles'] < 50:
                         nearest_point(this_plane)
-    except Exception as e:
-        print(" error in read_planes {}\n".format(e))
+    except Exception as e_name:
+        print(f" error in read_planes {e_name}\n")
 
 
 def dump_the_planes(icao_hex):
     """Called to dump planes with similar height and distance"""
-    loggit("Dump planes with similar distance to {}".format(icao_hex))
+    loggit(f"Dump planes with similar distance to {icao_hex}")
     if icao_hex not in all_planes:
-        loggit("could not find {} in all_planes".format(icao_hex))
+        loggit(f"could not find {icao_hex} in all_planes")
         return
     target = all_planes[icao_hex]
 
@@ -301,11 +302,11 @@ def dump_the_planes(icao_hex):
             hv = Haversine(ll_target, ll_this)
             proximity = hv.miles
 
-        hd = 1001
+        h_diff = 1001
         if 'alt_baro' in this_plane and this_plane['alt_baro'] != 'ground':
-            hd = abs(alt - int(this_plane['alt_baro']))
+            h_diff = abs(alt - int(this_plane['alt_baro']))
 
-        if proximity < 20 and hd < 1000:
+        if proximity < 20 and h_diff < 1000:
             txt = "{" + " hex:'{}',proximity:'{:.2f}'".format(icao, proximity)
             for item in ['icao', 'alt_baro', 'miles', 'track', 'tail', 'lat', 'lon']:
                 if item in this_plane:
@@ -315,7 +316,7 @@ def dump_the_planes(icao_hex):
                 (target_time - this_plane['touched']), get_time()) + "},"
             loggit(txt)
 
-
+init_loggit("output.txt","/tmp/debug.txt")
 init_reference_data()
 update_reference_data()
 start_webserver()

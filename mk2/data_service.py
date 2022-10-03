@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 
-from loggit import loggit
+from loggit import loggit,init_loggit
 from loggit import TO_FILE, TO_SCREEN, BOTH, TO_DEBUG
 
 # Tuple index
@@ -61,7 +61,7 @@ class DataService:
 
         return val
 
-    def blackswan_lookup(icao):
+    def blackswan_lookup(self,icao):
         if '~' in icao:
             loggit("~ detected in icao - dont lookup in blackswan" )
             return(None,None)
@@ -304,6 +304,7 @@ class DataService:
 
 
 if __name__ == "__main__":
+    init_loggit("normal.txt","/tmp/normal_debug.txt")
     print("Lets start testing")
     home = os.path.expanduser('~/planes/mk2')
     ds = DataService(home + "/consolidated_data.sqb")
