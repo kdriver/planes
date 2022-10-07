@@ -15,6 +15,7 @@ def page():
     txt = txt + '<table id="myTable">'
     txt = txt + '<tr class="header">'
     txt = txt + '<th> icao </th>'
+    txt = txt + '<th> country </th>'
     txt = txt + '<th> flight </th>'
     txt = txt + '<th> tail </th>'
     txt = txt + '<th> closest </th>'
@@ -29,10 +30,10 @@ def page():
     for plane in planes:
         p = planes[plane]
         txt = txt + '<tr>'
-        for item in ['icao','flight','tail','closest_miles','current_miles','plane','alt_baro','closest_lat','closest_lon','route']:
+        for item in ['icao','icao_country','flight','tail','closest_miles','current_miles','plane','alt_baro','closest_lat','closest_lon','route']:
             txt = txt + '<td>'
             if item in p:
-                if type(p[item]) == float:
+                if isinstance(p[item],float) :
                     txt = txt + "{:>3.2f}".format(p[item])
                 else:
                     txt = txt + str(p[item])
@@ -60,10 +61,10 @@ class MyHandler(BaseHTTPRequestHandler):
             return
             
         try:
-                self.send_response(200)
-                self.send_header("Content-type","text/html")
-                self.end_headers()
-                self.wfile.write(b'''<head><style>
+            self.send_response(200)
+            self.send_header("Content-type","text/html")
+            self.end_headers()
+            self.wfile.write(b'''<head><style>
                 * {
                   box-sizing: border-box;
                   }
@@ -101,7 +102,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
                     </style></head><body>''')
 
-                self.wfile.write(b'''
+            self.wfile.write(b'''
         <script>
         var lessormore = 1;
 
@@ -182,12 +183,11 @@ class MyHandler(BaseHTTPRequestHandler):
         }
         </script>''')
                  
-
-                the_lock.acquire()
-                self.wfile.write(bytes("num planes " + str(len(planes)),'utf-8'))
-                self.wfile.write(bytes(page(),'utf-8'))
-                the_lock.release()
-                self.wfile.write(b'</body>')
+            the_lock.acquire()
+            self.wfile.write(bytes("num planes " + str(len(planes)),'utf-8'))
+            self.wfile.write(bytes(page(),'utf-8'))
+            the_lock.release()
+            self.wfile.write(b'</body>')
         except Exception as e:
             loggit("Error serving web page {}".format(e))
         return

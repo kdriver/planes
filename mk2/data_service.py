@@ -8,10 +8,10 @@ import json
 import sys
 import requests
 
+from icao_countries import ICAOCountries
 import adsbex_query
 from bs4 import BeautifulSoup
 from datetime import datetime
-
 
 from loggit import loggit,init_loggit
 from loggit import TO_FILE, TO_SCREEN, BOTH, TO_DEBUG
@@ -41,6 +41,7 @@ class DataService:
             cursor.execute(self.create_text)
             self.handle.commit()
             self.counter = 0
+            self.icao_map = ICAOCountries()
             # self.refresh_external_data()
             # self.update_local_cache()
         except Exception as my_e:
@@ -96,7 +97,10 @@ class DataService:
             loggit(f'could not find plane  {icao} in blackswan , exception : {my_e}')
             return (None,None)
 
-
+    def get_country(self, icao):
+        return self.icao_map.icao_to_country(icao)
+    
+    
     def lookup(self, icao, remote_lookup=True):
         # loggit("lookup {}".format(icao),BOTH)
         """
@@ -115,7 +119,7 @@ class DataService:
                 # loggit("{} found {} in consolidated data".format(the_hex,row),BOTH)
                 return row
 
-            if remote_lookup is not True:
+            if remote_lookup is False:
                 return None
 
             loggit(f"remote lookup {the_hex}",BOTH)

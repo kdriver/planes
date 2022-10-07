@@ -157,6 +157,9 @@ def add_route(plane):
 
 def add_tail_and_type_2(icao,plane):
     """ look up the tail from icao hex """
+    answer = consolidated_data.get_country(icao)
+    plane['icao_country'] = answer
+    
     answer = consolidated_data.lookup(icao)
     if answer is None:
         return None

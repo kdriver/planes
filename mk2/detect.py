@@ -53,7 +53,11 @@ def get_time(clock=time.time()):
 
 def enrich(icao_hex, the_plane):
     """ Given the icao hex for the plane, enrich the plane data from reference data """
-    result = add_reference_data(icao_hex, the_plane)
+    try:
+        result = add_reference_data(icao_hex, the_plane)
+    except Exception as my_exc:
+        print(f"enrich exception {my_exp}")
+        return
     # A tilde in the hex indicates a TIS-B record 
     # Dumping planes around the record gives a chance to see which plane it is
     if result is None and '~' not in icao_hex:
@@ -92,13 +96,15 @@ def nearest_point(the_plane):
     Also write out the kml file with tracked path.
     and if its within TWEET_RADIUS - tweet it too """
 
-    pd = "{} -> nearest   {} ".format(get_time(the_plane["closest_time"]),the_plane['icao'])
-    for item in ['closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
+    pd = "{} {}".format(get_time(the_plane["closest_time"]),the_plane['icao'])
+    for item in ['icao_country','closest_miles','flight','tail','track','alt_baro','Owner','Manufacturer','plane','route']:
         if item in the_plane and the_plane[item] is not None:
             if item in {'closest_miles','track'}:
                 pd = pd + " {:>7.2f} ".format(the_plane[item])
             elif  item in {'flight','tail','alt_baro'}:
                 pd = pd + "{0:7} ".format(the_plane[item])
+            elif item in { 'icao_country'}:
+                pd = pd + f" {the_plane['icao_country']:<15}"
             else:
                 pd = pd + " {:<} ".format(the_plane[item])
         else:
