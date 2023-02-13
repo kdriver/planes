@@ -31,10 +31,11 @@ from kml import kml_doc
 from kml import write_kmz
 from kml import three_d_vrs
 from my_queue import my_queue
-from my_queue import  INFINATE
+from my_queue import  INFINITE
 from home import home
+from blessed import Terminal
 
-
+term = Terminal()
 all_planes={}
 # planes with closest approach to home of less that TWEET_RADIUS miles will be tweeted
 TWEET_RADIUS=2.0
@@ -43,6 +44,9 @@ osm = requests.Session()
 dump_planes = False
 dump_icao = None
 dump_time = 0
+
+def get_term_width()->int:
+    return term.width
 
 
 def get_time(clock=time.time()):
@@ -151,6 +155,7 @@ def nearest_point(the_plane):
 
     the_plane['reported'] = 1
 
+    width = get_term_width()-1
     try:
         if 'miles' not in the_plane:
             pd = pd + " " + json.dumps(the_plane)
@@ -160,7 +165,7 @@ def nearest_point(the_plane):
         if the_plane['miles'] < TWEET_RADIUS:
             tweet(pd)
             pd = pd + " : " + place
-            loggit(pd,BOTH,GREEN_TEXT)
+            loggit(pd[:width],BOTH,GREEN_TEXT)
             txt = "the_plane overhead "
             if 'Owner' in the_plane:
                 txt = txt + " " + the_plane['Owner']
@@ -182,9 +187,9 @@ def nearest_point(the_plane):
             pd = pd + " : " + place
             if 'plane' in the_plane:
                 if 'DA42' in the_plane['plane']: 
-                    loggit(pd,BOTH,YELLOW_TEXT)
+                    loggit(pd[:width],BOTH,YELLOW_TEXT)
                 else:
-                    loggit(pd,BOTH,CYAN_TEXT)
+                    loggit(pd[:width],BOTH,CYAN_TEXT)
                     #loggit("{}".format(the_plane["tracks"].get_values()),BOTH,CYAN_TEXT)
     except Exception as e:
         loggit("reporting failed {}".format(e))
@@ -217,7 +222,7 @@ def read_planes():
                     icao = plane["hex"].strip().upper()
                     if icao not in all_planes:
                         all_planes[icao] = {"icao": icao, 'max_miles': 0.0, 'closest_miles': start_miles,
-                                            'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINATE,icao)}
+                                            'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINITE,icao)}
                     this_plane = all_planes[icao]
                     this_plane['touched'] = time.time()
 

@@ -129,7 +129,8 @@ class DataService:
                 loggit(f"adsb lookup exception {my_exception}", BOTH)
                 adsb = None
 
-            if adsb is not None:
+            if adsb is not None and adsb['tail'] !='CONTACTADSBX':
+                loggit(f"{adsb}",BOTH)
                 row = (adsb['tail'], adsb['type'])
                 loggit(f"{the_hex} found {row} in from ADSB API",BOTH)
                 data = {
@@ -263,7 +264,39 @@ class DataService:
             loggit("\nfinished parsing basic-ac-db.json {} records. {} inserts , {} updates {} errors ".format(counter,inserts,updates,errors))       
         # commit the changes / insertions we made
         self.handle.commit()
+        
+    def check_from_adsbex_basic_data(self):
+        counter = 0
+        errors=0
+        records_found=0
+        loggit("check  from ADSB Exchange Basic data")
+        with open('basic-ac-db.json') as f:
+            while True:
+                try:
+                    counter = counter + 1
+                    line = f.readline()
+                    if not line:
+                        break
+                    ac = json.loads(line)
+                    icao = ac["icao"].lower()
+                    local_data = self.lookup(icao,False)
+                                    
+                    if local_data is not None:
+                       records_found = records_found + 1
+                    else:
+                        loggit(f"did not find icao {icao}",BOTH)
 
+                    if not(counter % 50000):
+                        loggit("interim {} records {} records found {} errors \r".format(counter,records_found,errors),BOTH) 
+                        loggit(f"{ac}",BOTH)
+                        # print(".",end='',flush=True)
+                        self.handle.commit()
+                except Exception as e:
+                    loggit("error parsing in basic-ac-db.json {} json is {} ".format(e,line),TO_FILE)
+                    errors = errors + 1                  
+            loggit("\nfinished parsing basic-ac-db.json {} records. {} records found, {} errors ".format(counter,records_found,errors))       
+        # commit the changes / insertions we made
+   
     def update_from_adsb_basestation_data(self):
         loggit("update from BaseStation data")
         handle = sqlite3.connect("BaseStation.sqb")
@@ -311,5 +344,8 @@ if __name__ == "__main__":
     init_loggit("normal.txt","/tmp/normal_debug.txt")
     print("Lets start testing")
     home = os.path.expanduser('~/planes/mk2')
+    home = '.'
     ds = DataService(home + "/consolidated_data.sqb")
-    ds.update_local_cache()
+    ds.lookup('cecedf')
+    #ds.check_from_adsbex_basic_data()
+    #ds.update_local_cache()

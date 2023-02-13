@@ -18,14 +18,14 @@ def attach_sqldb():
         print(e)
 
 def insert_data(data_tuple):
-        global sql_conn
-        try:
-            cur = sql_conn.cursor()
-            cur.execute("INSERT INTO planes(%s) VALUES (?,?,?,?,?,?,?,?,?,?)" % cols,data_tuple)
-            sql_conn.commit();
-        except :
-            pass
-            #print(e)
+    global sql_conn
+    try:
+        cur = sql_conn.cursor()
+        cur.execute("INSERT INTO planes(%s) VALUES (?,?,?,?,?,?,?,?,?,?)" % cols,data_tuple)
+        sql_conn.commit();
+    except :
+        pass
+        #print(e)
 
 
 

@@ -3,7 +3,7 @@
 #from loggit import loggit
 #from loggit import TO_DEBUG
 
-INFINATE = 0
+INFINITE = 0
 
 #inherit from dict to make class serialisable
 class my_queue(dict):
@@ -18,7 +18,7 @@ class my_queue(dict):
 
     def add(self,element):
         """ Add an element to the queue at the head of the queue """
-        if self.size_q != INFINATE:
+        if self.size_q != INFINITE:
             if  len(self.q) >= self.size_q:
                 del self.q[-1]
         self.q.insert(0,element)
