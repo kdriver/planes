@@ -104,7 +104,11 @@ FEET_TO_METERS=.3048
 def kml_doc(lon1,lat1,lon2,lat2,alt,name,dist,tracks):
     coords = ""
     for track in tracks.get_values():
-        cline = "{},{},{}".format(track["lon"],track["lat"],float(track["alt"])*FEET_TO_METERS)
+        if isinstance(track["alt"],int):
+          cline = "{},{},{}".format(track["lon"],track["lat"],float(track["alt"])*FEET_TO_METERS)
+        else:
+          cline = "{},{},{}".format(track["lon"],track["lat"],0.0)
+
         coords = coords + cline +  "\n"
 
     return text.format(name,dist,lon1,lat1,lon2,lat2,coords)
@@ -134,14 +138,19 @@ def three_d_vrs(all_planes):
 
             if proceed is True:
                 if this_plane['miles']:  # < 180:
-                    coords = "{},{},{}".format(
-                        this_plane['lon'], this_plane['lat'], float(this_plane['alt_baro'])*FEET_TO_METERS)
+                    if isinstance(this_plane["alt_baro"],int):
+                      coords = "{},{},{}".format(
+                          this_plane['lon'], this_plane['lat'], float(this_plane['alt_baro'])*FEET_TO_METERS)
+                    else:
+                      coords = "{},{},{}".format(
+                          this_plane['lon'], this_plane['lat'], 0.0)
+                      
                     the_text = this_plane['tail'] + " | " + this_plane['icao']
                     placemark = placemark_text.format(
                         this_plane['track'], the_text, coords)
                     placemarks = placemarks + placemark
         except Exception as e:
-          loggit("error three_d_vrs {}, {}".format(e, this_plane))
+          loggit("error three_d_vrs {}, {}\n".format(e, this_plane))
 
 
     doc_text = vrs_text.format(placemarks)

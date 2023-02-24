@@ -141,3 +141,8 @@ G-FDZB.kmz
 mk2/ren.py
 mk2/l.py
 
+mk2/diag.py
+.gitignore
+mk2/.DS_Store
+mk2/dec-13-basic-ac-db.json
+mk2/test_list.py

@@ -24,6 +24,7 @@ from Haversine import Haversine
 from reference_data import update_reference_data
 from reference_data import init_reference_data
 from reference_data import add_reference_data
+from reference_data import flush_suppression_list
 from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
@@ -244,10 +245,8 @@ def read_planes():
                         this_plane['tracks'].add(
                             {'miles': miles, "lon": this_plane["lon"], "lat": this_plane["lat"], "alt": this_plane["alt_baro"]})
                         if miles < this_plane['miles']:
-                            this_plane['closest_lat'] = float(
-                                this_plane['lat'])
-                            this_plane['closest_lon'] = float(
-                                this_plane['lon'])
+                            this_plane['closest_lat'] = float(this_plane['lat'])
+                            this_plane['closest_lon'] = float(this_plane['lon'])
                             this_plane['closest_alt'] = this_plane["alt_baro"]
                             this_plane['closest_miles'] = miles
                             this_plane["closest_time"] = time.time()
@@ -373,11 +372,12 @@ while 1:
 
     # every 60 seconds
     if (now - last_tick) > 60:
-        #   write out a kml file with all the t planes we can see
-        three_d_vrs(all_planes)
         if (now - last_log) > 300:
             loggit("{} planes being tracked ".format(len(all_planes)), TO_SCREEN)
             last_log = now
+            flush_suppression_list()
+         #   write out a kml file with all the t planes we can see
+        three_d_vrs(all_planes)
         last_tick = now
 
 

@@ -7,6 +7,7 @@ import subprocess
 import json
 import sys
 import requests
+import time
 
 from icao_countries import ICAOCountries
 import adsbex_query
@@ -23,7 +24,7 @@ TYPE = 1
 class DataService:
     """
     This class manages access to reference data so that 
-    we can use the icao hex value to lookup tail, plane etc
+    we can use the icao hex value to  tail, plane etc
     """
     create_text = """ CREATE TABLE IF NOT EXISTS aircraft ( id integer primary key autoincrement,  
                       hex text, tail text,type text , seen integer, looked_up integer); """
@@ -42,6 +43,7 @@ class DataService:
             self.handle.commit()
             self.counter = 0
             self.icao_map = ICAOCountries()
+            self.suppress_dict = {}
             # self.refresh_external_data()
             # self.update_local_cache()
         except Exception as my_e:
@@ -72,7 +74,7 @@ class DataService:
     
             self.counter = self.counter + 1
             the_url = f'https://blackswan.ch/aircraft/{icao}'
-            loggit(f'Lookup {icao} in blackswan {the_url}')
+            loggit(f' {icao} in blackswan {the_url}')
 
             r = requests.get(the_url)
             page= r.text
@@ -100,17 +102,43 @@ class DataService:
     def get_country(self, icao):
         return self.icao_map.icao_to_country(icao)
     
+    def flush_suppress_list(self):
+        """  Flush the list that caches the icoa to prevent too many API lookups """
+        now = time.time()
+        if len(self.suppress_dict) > 0:
+            loggit(f"suppress list :")
+        delete_list = []
+        for plane in self.suppress_dict.items():
+            k,value = plane
+            age = now - value
+            loggit(f"   suppress list  {k}, seconds old {age}, hours old {age/3600} hours")
+            if age > float(60*60*24):
+                delete_list.append(k)
+        
+        for item in delete_list:
+            loggit(f"flush suppress list for {item}",BOTH)
+            del self.suppress_dict[item]
+            
+    
+    def is_suppressed(self,icao):
+        if icao in self.suppress_dict:
+            return True
+        return False
     
     def lookup(self, icao, remote_lookup=True):
-        # loggit("lookup {}".format(icao),BOTH)
+        # loggit(" {}".format(icao),BOTH)
         """
-        Look for data against the icao hex value and return a list of va,ues found, or None
+        Look for data against the icao hex value and return a list of values found, or None
         """
         try:
 
             the_hex = icao.lower()
 
             if '~' in the_hex:  # Its a TIS-B record
+                return None
+            
+            if self.is_suppressed(the_hex):
+                #loggit(f"plane {icao} is in the suppress list")
                 return None
             rows = self.handle.execute(
                 "SELECT tail,type FROM aircraft WHERE hex = ?", (the_hex,))
@@ -153,10 +181,12 @@ class DataService:
                                 'icao_hex' : the_hex,
                                 'man' : None
                             }
-                    loggit(f"{the_hex} found {row} in from blackswan API",BOTH)
-                    self.insert(data,True)
-                    return row
+                    loggit(f"{the_hex} found {row} from blackswan API",BOTH)
+                    if blackswan[0] != '':
+                        self.insert(data,True)
+                        return row
                 loggit(f"{icao} Not found in blackswan API",BOTH)
+                self.suppress_dict[icao] = time.time();
 
             except Exception as e_name:
                 loggit(f"blackswan lookup exception {e_name}", BOTH)

@@ -160,6 +160,9 @@ def add_tail_and_type_2(icao,plane):
     answer = consolidated_data.get_country(icao)
     plane['icao_country'] = answer
     
+    if consolidated_data.is_suppressed(icao):
+        return None
+    
     answer = consolidated_data.lookup(icao)
     if answer is None:
         return None
@@ -176,6 +179,10 @@ def add_reference_data(icao,plane):
     if 'route' not in plane:
         add_route(plane)
     return result
+
+def flush_suppression_list():
+    """ Invoke the flushing of the supress list that prevents too many API lookups """
+    consolidated_data.flush_suppress_list()
 
 
 if __name__ == "__main__":
