@@ -41,9 +41,11 @@ class DataService:
             cursor = self.handle.cursor()
             cursor.execute(self.create_text)
             self.handle.commit()
-            self.counter = 0
+            self.black_counter = 0
+            self.counter= 0
             self.icao_map = ICAOCountries()
             self.suppress_dict = {}
+            self.start_time=datetime.now()
             # self.refresh_external_data()
             # self.update_local_cache()
         except Exception as my_e:
@@ -72,7 +74,7 @@ class DataService:
 
         try:
     
-            self.counter = self.counter + 1
+            self.black_counter = self.black_counter + 1
             the_url = f'https://blackswan.ch/aircraft/{icao}'
             loggit(f' {icao} in blackswan {the_url}')
 
@@ -82,11 +84,11 @@ class DataService:
             reg = soup.find("td" ,attrs={"data-target" :"reg"})
             #model = soup.find("td" ,attrs={"data-target" :"model"}).text
             model = soup.find("td" ,attrs={"data-target" :"type"})
-            the_diff = datetime.now() - DataService.start_time
+            the_diff = datetime.now() - self.start_time
             in_seconds = the_diff.total_seconds()
             in_days = in_seconds/(60*60*24)
-            requests_per_day = self.counter/in_days
-            loggit(f"{self.counter} requests total, which is {requests_per_day} per day after {in_days} days") 
+            requests_per_day = self.black_counter/in_days
+            loggit(f"{self.black_counter} requests total, which is {requests_per_day} per day after {in_days} days") 
 
             if reg is None or model is None:
                 loggit(f"blackswan has no data for {icao}")
@@ -327,6 +329,51 @@ class DataService:
             loggit("\nfinished parsing basic-ac-db.json {} records. {} records found, {} errors ".format(counter,records_found,errors))       
         # commit the changes / insertions we made
    
+    def update_from_aircraftDatabase(self):
+        counter = 0
+        inserts=0
+        updates=0
+        errors=0
+        the_same = 0
+        loggit("update from aircraft Database ")
+        with open('aircraftDatabase.csv') as f:
+            my_reader = csv.DictReader(f)
+            
+            for row in my_reader:
+                icao = row["icao24"]
+                tail = row['registration']
+                plane_type = row['typecode']
+                local_data = self.lookup(icao,False)
+                counter = counter + 1
+                if local_data is None:
+                    # No local data , so insert this data
+                    self.insert({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })
+                    inserts = inserts + 1 
+                else:
+                    if local_data[TAIL] == tail and local_data[TYPE] == plane_type:
+                        the_same = the_same + 1
+                    else:
+                        #print(f"different {icao}  {tail} {plane_type} : {local_data}")
+                        #print(f"    {row}")
+                        if local_data[TAIL] != tail:
+                            #print(f"****TAILS**** different {icao}  {tail} {plane_type} : {local_data}")
+                            #print(f"    {row}")
+                            b=1
+                        else:
+                            if local_data[TAIL] == ''  and local_data[TYPE]== '': #if we have null data for both then use the new data
+                                self.update({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })
+                                updates = updates + 1
+                                print(f"updated {icao} {tail} {plane_type}")
+                if not(counter % 50000):
+                        loggit("interim {} records {} records found {} errors \r".format(counter,records_found,errors),BOTH) 
+                        loggit(f"{ac}",BOTH)
+                        # print(".",end='',flush=True)
+                        self.handle.commit()
+       
+        self.handle.commit()
+        loggit(f"\nfinished parsing aircraftDatabase.csv  {counter} records: identical  {the_same} inserts {inserts} , updates {updates}   errors {errors} ") 
+
+                
     def update_from_adsb_basestation_data(self):
         loggit("update from BaseStation data")
         handle = sqlite3.connect("BaseStation.sqb")
@@ -365,6 +412,7 @@ class DataService:
 
     def update_local_cache(self):
         self.update_from_adsbex_basic_data()
+        self.update_from_aircraftDatabase()
         # self.update_from_adsb_basestation_data()
         # self.update_from_modeS_tsv()
 
@@ -376,6 +424,8 @@ if __name__ == "__main__":
     home = os.path.expanduser('~/planes/mk2')
     home = '.'
     ds = DataService(home + "/consolidated_data.sqb")
-    ds.lookup('cecedf')
+    #ds.lookup('cecedf')
+
+    #ds.update_from_aircraftDatabase()
     #ds.check_from_adsbex_basic_data()
-    #ds.update_local_cache()
+    ds.update_local_cache()

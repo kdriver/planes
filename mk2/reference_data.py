@@ -184,6 +184,9 @@ def flush_suppression_list():
     """ Invoke the flushing of the supress list that prevents too many API lookups """
     consolidated_data.flush_suppress_list()
 
+def is_suppressed(icoa):
+    """ Is the plane in the suppression list """
+    return consolidated_data.is_suppressed(icoa)
 
 if __name__ == "__main__":
     last_updated = time.time() - ( 2*interval)

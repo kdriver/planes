@@ -8,9 +8,17 @@ update_aircraft_data () {
 	wget  -N  -o /tmp/wget.log $2 
 	grep  Omitting /tmp/wget.log > /dev/null
 	if [ $? -eq 1 ] ; then
-		echo "Downloaded .. Unzipping $1"
-		gunzip -f --keep  $1  
-		echo "Done"
+		case $1 in
+			*"gz"*)
+				echo "Downloaded .. gunzipping $1"
+				gunzip -f --keep  $1
+				;;
+			*"zip"*)
+				echo "Downloaded .. unzipping $1"
+				unzip -oj $1
+				;;
+		esac
+		echo "decompression done"
 	else
 		echo "Omitted Download of $1"
 	fi
@@ -30,6 +38,8 @@ update_aircraft_data modes.tsv.gz   http://data.flightairmap.com/data/modes.tsv.
 update_aircraft_data  BaseStation.sqb.gz http://data.flightairmap.com/data/basestation/BaseStation.sqb.gz
 
 update_aircraft_data  StandingData.sqb.gz http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz
+
+update_aircraft_data  aircraftDatabase.zip https://opensky-network.org/datasets/metadata/aircraftDatabase.zip
 
 exit 0
 

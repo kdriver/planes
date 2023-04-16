@@ -25,6 +25,7 @@ from reference_data import update_reference_data
 from reference_data import init_reference_data
 from reference_data import add_reference_data
 from reference_data import flush_suppression_list
+from reference_data import is_suppressed
 from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
@@ -58,6 +59,8 @@ def get_time(clock=time.time()):
 
 def enrich(icao_hex, the_plane):
     """ Given the icao hex for the plane, enrich the plane data from reference data """
+    if is_suppressed(icao_hex):
+        return
     try:
         result = add_reference_data(icao_hex, the_plane)
     except Exception as my_exc:
