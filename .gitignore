@@ -146,3 +146,5 @@ mk2/diag.py
 mk2/.DS_Store
 mk2/dec-13-basic-ac-db.json
 mk2/test_list.py
+mk2/aircraftDatabase.csv
+mk2/aircraftDatabase.zip

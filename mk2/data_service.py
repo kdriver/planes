@@ -334,6 +334,7 @@ class DataService:
         inserts=0
         updates=0
         errors=0
+        records_found = 0
         the_same = 0
         loggit("update from aircraft Database ")
         with open('aircraftDatabase.csv') as f:
@@ -349,6 +350,7 @@ class DataService:
                     # No local data , so insert this data
                     self.insert({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })
                     inserts = inserts + 1 
+                    records_found = records_found + 1
                 else:
                     if local_data[TAIL] == tail and local_data[TYPE] == plane_type:
                         the_same = the_same + 1
@@ -366,7 +368,6 @@ class DataService:
                                 print(f"updated {icao} {tail} {plane_type}")
                 if not(counter % 50000):
                         loggit("interim {} records {} records found {} errors \r".format(counter,records_found,errors),BOTH) 
-                        loggit(f"{ac}",BOTH)
                         # print(".",end='',flush=True)
                         self.handle.commit()
        
@@ -411,8 +412,8 @@ class DataService:
         self.handle.commit()
 
     def update_local_cache(self):
-        self.update_from_adsbex_basic_data()
         self.update_from_aircraftDatabase()
+        self.update_from_adsbex_basic_data()
         # self.update_from_adsb_basestation_data()
         # self.update_from_modeS_tsv()
 

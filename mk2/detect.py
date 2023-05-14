@@ -48,6 +48,7 @@ dump_icao = None
 dump_time = 0
 
 def get_term_width()->int:
+    """ Return the current terminal width """
     return term.width
 
 
@@ -63,7 +64,7 @@ def enrich(icao_hex, the_plane):
         return
     try:
         result = add_reference_data(icao_hex, the_plane)
-    except Exception as my_exc:
+    except Exception as my_exp:
         print(f"enrich exception {my_exp}")
         return
     # A tilde in the hex indicates a TIS-B record 
@@ -167,7 +168,7 @@ def nearest_point(the_plane):
             return
 
         if the_plane['miles'] < TWEET_RADIUS:
-            tweet(pd)
+            # Twitter suspended the account tweet(pd)
             pd = pd + " : " + place
             loggit(pd[:width],BOTH,GREEN_TEXT)
             txt = "the_plane overhead "
@@ -272,8 +273,7 @@ def read_planes():
                                     this_plane["icao"])
 
                     except Exception as e:
-                        print("oh dear haversine {} {}".format(
-                            e, json.dumps(this_plane)))
+                        print("oh dear haversine {} {}".format(e, json.dumps(this_plane)))
                         continue
 
                 if miles < 200 and 'enriched' not in this_plane:
