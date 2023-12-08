@@ -189,5 +189,6 @@ def is_suppressed(icoa):
     return consolidated_data.is_suppressed(icoa)
 
 if __name__ == "__main__":
+    init_reference_data()
     last_updated = time.time() - ( 2*interval)
     update_reference_data()

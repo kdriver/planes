@@ -22,8 +22,8 @@ class Counter :
 def process_file(filename:str,the_original_file:str)->None:
     """link a file if it doesnt exist"""
 
-    # Awful regex becaise I sarted off with using __ as a separator, 
-    # but then that go used in the single digit days
+    # Awful regex because I started off with using __ as a separator, 
+    # but then that got used in the single digit day format
     # So now the filenames use -- as a separator, but this regexp copes with both
 
     plane = re.search('^.*[0-9A-F](__|--)',filename)
@@ -40,6 +40,7 @@ def process_file(filename:str,the_original_file:str)->None:
     new_linked_file_name = os.path.join(plane_dir,filename)
     if os.path.exists(new_linked_file_name) is False:
         os.link(the_original_file,new_linked_file_name)
+        linked_files.incr()
 
 
 def descend(directory: str)->None:
@@ -53,5 +54,6 @@ def descend(directory: str)->None:
 
 if __name__ == "__main__":
     counter = Counter()
+    linked_files = Counter()
     descend(KMLS)
-    print(f"kml files linked. {counter.num()} new planes seen")
+    print(f"{linked_files.num()} kml files linked. {counter.num()} new planes seen")
