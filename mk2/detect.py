@@ -19,7 +19,7 @@ from loggit import TO_SCREEN
 from loggit import GREEN_TEXT
 from loggit import YELLOW_TEXT
 from loggit import CYAN_TEXT
-#from loggit import RED_TEXT as RED_TEXT
+from loggit import RED_TEXT as RED_TEXT
 from Haversine import Haversine
 from reference_data import update_reference_data
 from reference_data import init_reference_data
@@ -84,17 +84,21 @@ def enrich(icao_hex, the_plane):
 def get_place(clat, clon):
     """ Use the Open Street Map API to look up the nearest place"""
     place = "unknown"
+    pos=""
     try:
-        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format(
-            clat, clon)
-        resp = osm.get(url=req)
-        pos = json.loads(resp.text)
-        if 'display_name' in pos:
+        req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format( clat, clon)
+        resp = osm.get(url=req,headers={'referer': "kddplanes"})
+        #loggit("OSM API ok req: {} ".format(req))
+        try:
+         pos = json.loads(resp.text)
+         if 'display_name' in pos:
             place = pos['display_name']
-        else:
+         else:
             place = "somewhere"
+        except Exception as e1:
+            loggit(" json {} resp {}  ".format(pos,resp.text),BOTH,RED_TEXT)
     except Exception as e:
-        loggit("could not access OSM API {} ".format(e))
+        loggit("could not access OSM API {} req: {} ".format(e,req),BOTH,RED_TEXT)
         return None
 
     return place[0:90]
@@ -330,7 +334,7 @@ def dump_the_planes(icao_hex):
             loggit(txt)
 
 
-init_loggit("output.txt","/tmp/debug.txt")
+init_loggit("output.txt","/tmp/debug.txt","vrs_update_logging.txt")
 init_reference_data()
 update_reference_data()
 start_webserver()

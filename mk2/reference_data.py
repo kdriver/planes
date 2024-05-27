@@ -155,7 +155,7 @@ def add_route(plane):
         #loggit("got route from sql %s " % route , TO_FILE)
         plane['route'] = route
 
-def add_tail_and_type_2(icao,plane):
+def add_tail_and_type(icao,plane):
     """ look up the tail from icao hex """
     answer = consolidated_data.get_country(icao)
     plane['icao_country'] = answer
@@ -172,7 +172,7 @@ def add_tail_and_type_2(icao,plane):
 
 def add_reference_data(icao,plane):
     """ look up the tail from icao hex , and route data if known"""
-    result = add_tail_and_type_2(icao,plane)
+    result = add_tail_and_type(icao,plane)
     if result is None and '~' not in icao:
         loggit("add_reference_data no tail found {}".format(icao),BOTH,RED_TEXT )
 

@@ -107,13 +107,13 @@ class DataService:
     def flush_suppress_list(self):
         """  Flush the list that caches the icoa to prevent too many API lookups """
         now = time.time()
-        if len(self.suppress_dict) > 0:
-            loggit(f"suppress list :")
+        #if len(self.suppress_dict) > 0:
+        #    loggit(f"suppress list :")
         delete_list = []
         for plane in self.suppress_dict.items():
             k,value = plane
             age = now - value
-            loggit(f"   suppress list  {k}, seconds old {age}, hours old {age/3600} hours")
+            #loggit(f"   suppress list  {k}, seconds old {age}, hours old {age/3600} hours")
             if age > float(60*60*24):
                 delete_list.append(k)
         
@@ -172,7 +172,7 @@ class DataService:
                 loggit(f"adsb exchange lookup {data}", BOTH)
                 self.insert(data,True)
                 return row
-            loggit(f"{icao} Not found in ADSB exchange API",BOTH)
+            loggit(f"    {icao} Not found in ADSB exchange API",BOTH)
             try:
                 blackswan = self.blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
@@ -187,7 +187,7 @@ class DataService:
                     if blackswan[0] != '':
                         self.insert(data,True)
                         return row
-                loggit(f"{icao} Not found in blackswan API",BOTH)
+                loggit(f"    {icao} Not found in blackswan API",BOTH)
                 self.suppress_dict[icao] = time.time();
 
             except Exception as e_name:
