@@ -34,8 +34,11 @@ class Vrs():
     def update_entry(self,bearing,lat,lon,alt,miles,icao):
         self.the_time=time.time()
         alarm=""
-        if miles > 300.0:
+        if miles > 400.0:
             alarm = " alarm {} ".format(self.the_time)
+            loggit(f'bad position found {icao} {self} {bearing} {lat} {lon} {alt} {miles} {alarm}')
+            return
+
         if alt <= 10000:
             self.update_entry_10k(bearing,lat,lon,alt,miles,icao,alarm)
         else:

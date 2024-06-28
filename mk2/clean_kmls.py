@@ -10,7 +10,7 @@ dirs = []
     
 for file in os.listdir(directory):
      filename = os.fsdecode(file)
-     if filename.endswith(".asm") or filename.endswith(".py") or filename.startswith("."):
+     if filename.endswith(".asm") or filename.endswith(".py") or filename.startswith(".") or filename.endswith(".tgz"):
         # print(os.path.join(directory, filename))
         continue
      else:
