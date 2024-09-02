@@ -56,6 +56,18 @@ class DataService:
     def update_the_cache(self):
         self.update_local_cache()
 
+    def plane_seen(self, icao):
+        if '~' in icao:
+            return
+        try:
+            the_hex = icao.lower()
+            sql_cmd = f" UPDATE aircraft SET seen = seen + 1 WHERE hex = '{the_hex}' ; "
+            cursor = self.handle.cursor()
+            cursor.execute(sql_cmd)
+            self.handle.commit()
+        except Exception as e:
+            loggit(f"plane_seen: error {e} {sql_cmd}")
+
     def call_command(self, command):
         txt = subprocess.check_output(command, stderr=subprocess.STDOUT)
         if isinstance(txt, bytes):
@@ -75,10 +87,12 @@ class DataService:
         try:
     
             self.black_counter = self.black_counter + 1
+            time_b = time.time()
             the_url = f'https://blackswan.ch/aircraft/{icao}'
             loggit(f' {icao} in blackswan {the_url}')
 
             r = requests.get(the_url)
+            time_diff = time.time() - time_b
             page= r.text
             soup = BeautifulSoup(page,"html.parser")
             reg = soup.find("td" ,attrs={"data-target" :"reg"})
@@ -88,7 +102,7 @@ class DataService:
             in_seconds = the_diff.total_seconds()
             in_days = in_seconds/(60*60*24)
             requests_per_day = self.black_counter/in_days
-            loggit(f"{self.black_counter} requests total, which is {requests_per_day} per day after {in_days} days") 
+            loggit(f"bs lookup took {time_diff} secs. {self.black_counter} requests total, which is {requests_per_day} per day after {in_days} days") 
 
             if reg is None or model is None:
                 loggit(f"blackswan has no data for {icao}")
@@ -187,7 +201,7 @@ class DataService:
                     if blackswan[0] != '':
                         self.insert(data,True)
                         return row
-                loggit(f"    {icao} Not found in blackswan API",BOTH)
+                loggit(f"    {icao} Not found in blackswan API, suppress lookup for 24 hours",BOTH)
                 self.suppress_dict[icao] = time.time();
 
             except Exception as e_name:
@@ -417,10 +431,27 @@ class DataService:
         # self.update_from_adsb_basestation_data()
         # self.update_from_modeS_tsv()
 
+    def planespotters(self,hex):
+        headers = { 'Accept-Language' : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8", 
+            'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" }
+        url = "https://www.planespotters.net/hex/" + hex
+        print(f"URL {url}")
+        resp = requests.get(url,headers=headers)
+        page= resp.text
+        print(f"{page}")
+        print(f"response code {resp.status_code}")
+        soup = BeautifulSoup(page,"html.parser")
+        try : 
+           div = soup.find("div" ,{"class" : "grid-2"})
+           loggit(f"OK {div}")
+        except: 
+           print("dead")
+
+
 
 
 if __name__ == "__main__":
-    init_loggit("normal.txt","/tmp/normal_debug.txt")
+    init_loggit("normal.txt","/tmp/normal_debug.txt","/tmp/vrs_logging.txt")
     print("Lets start testing")
     home = os.path.expanduser('~/planes/mk2')
     home = '.'
@@ -429,4 +460,6 @@ if __name__ == "__main__":
 
     #ds.update_from_aircraftDatabase()
     #ds.check_from_adsbex_basic_data()
-    ds.update_local_cache()
+    #ds.update_local_cache()
+    ds.planespotters("4CAE6B")
+

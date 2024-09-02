@@ -23,12 +23,12 @@ def adsb_lookup(plane):
             return None
         else:
             #loggit(json.dumps(answer,indent=4))
-            loggit("Data Returned")
             try:
                 data = { 'icao' : plane, 'tail' : p['reg'] , 'from' : p['from'], 'to':p['to'] , 'type' :p['type']}
             except:
                 data = { 'icao' : plane, 'tail' : p['reg'], 'type':p['type'] }
 
+            loggit(f"Data Returned {data}")
             return data
     else:
         return None

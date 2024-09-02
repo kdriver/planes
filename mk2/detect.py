@@ -26,6 +26,7 @@ from reference_data import init_reference_data
 from reference_data import add_reference_data
 from reference_data import flush_suppression_list
 from reference_data import is_suppressed
+from reference_data import plane_seen
 from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
@@ -209,7 +210,6 @@ def nearest_point(the_plane):
 # and check if it gets close.
 
 
-
 def read_planes():
     """ read in the planes from dump1090 and cache the data """
     try:
@@ -232,6 +232,7 @@ def read_planes():
                     if icao not in all_planes:
                         all_planes[icao] = {"icao": icao, 'max_miles': 0.0, 'closest_miles': start_miles,
                                             'closest_lat': 0.0, 'closest_lon': 0.0, 'miles': start_miles, 'tracks': my_queue(INFINITE,icao)}
+                        # record the fact we have seen this plane by incrementing the database count but not on forst run through
                     this_plane = all_planes[icao]
                     this_plane['touched'] = time.time()
 
@@ -343,7 +344,6 @@ last_log = last_tick
 sqldb.attach_sqldb()
 vrs = Vrs("vrs_data.sqb")
 
-
 while 1:
     read_planes()
     delete_list = []
@@ -358,6 +358,7 @@ while 1:
             p['expired'] = 1
             nearest_point(p)
         write_kmz(home, p)
+        plane_seen(p['icao'])
         del all_planes[plane]
 
     # check to see if we need to referesh any of the online databases

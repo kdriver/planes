@@ -184,9 +184,12 @@ def flush_suppression_list():
     """ Invoke the flushing of the supress list that prevents too many API lookups """
     consolidated_data.flush_suppress_list()
 
-def is_suppressed(icoa):
+def is_suppressed(icao):
     """ Is the plane in the suppression list """
-    return consolidated_data.is_suppressed(icoa)
+    return consolidated_data.is_suppressed(icao)
+
+def plane_seen(icao):
+    consolidated_data.plane_seen(icao)
 
 if __name__ == "__main__":
     init_reference_data()
