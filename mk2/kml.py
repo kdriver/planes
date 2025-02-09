@@ -189,7 +189,7 @@ if __name__ == "__main__":
     tracks = my_queue(500)                                                                                                                               
     tlon = home[0]
     tlat = home[1]
-    for point in range(0, 10, 1):
+    for _point in range(0, 10, 1):
         tlon = tlon + 0.1
         tlat = tlat + 0.1
         track = {'lon': tlon, 'lat': tlat, 'alt': 1000}

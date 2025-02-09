@@ -17,7 +17,7 @@ def adsb_lookup(plane):
     answer = r.json()
     aircraft = answer['ac']
     data = []
-    if aircraft != None:
+    if aircraft is not None:
         p = aircraft[0]
         if p['reg'] == '':
             return None

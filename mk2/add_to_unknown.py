@@ -4,11 +4,10 @@
 
 
 
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 # import requests
 # import sqlite3
 from datetime import datetime
-from loggit import loggit
 
 counter=0
 start_time=datetime.now()

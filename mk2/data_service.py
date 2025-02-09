@@ -202,7 +202,7 @@ class DataService:
                         self.insert(data,True)
                         return row
                 loggit(f"    {icao} Not found in blackswan API, suppress lookup for 24 hours",BOTH)
-                self.suppress_dict[icao] = time.time();
+                self.suppress_dict[icao] = time.time()
 
             except Exception as e_name:
                 loggit(f"blackswan lookup exception {e_name}", BOTH)
@@ -374,7 +374,7 @@ class DataService:
                         if local_data[TAIL] != tail:
                             #print(f"****TAILS**** different {icao}  {tail} {plane_type} : {local_data}")
                             #print(f"    {row}")
-                            b=1
+                            pass 
                         else:
                             if local_data[TAIL] == ''  and local_data[TYPE]== '': #if we have null data for both then use the new data
                                 self.update({ 'tail' : tail, 'icao_hex' : icao, 'model' : plane_type })

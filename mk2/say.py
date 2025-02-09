@@ -32,7 +32,7 @@ def do_the_work(say):
     s.close()
     #**********************
 
-    fname=hashlib.md5(say.encode()).hexdigest()+".mp3"; #create md5 filename for caching
+    fname=hashlib.md5(say.encode()).hexdigest()+".mp3" #create md5 filename for caching
 
     chromecasts, _browser = pychromecast.get_listed_chromecasts(friendly_names=["Back garden speaker"])
     castdevice = chromecasts[0]

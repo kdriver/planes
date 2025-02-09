@@ -8,6 +8,7 @@ import zipfile
 import requests
 import sqldb
 import say
+import re
 
 
 
@@ -27,7 +28,7 @@ from reference_data import add_reference_data
 from reference_data import flush_suppression_list
 from reference_data import is_suppressed
 from reference_data import plane_seen
-from twitter import tweet
+#from twitter import tweet
 from web import start_webserver
 from web import update_plane_data
 from kml import kml_doc
@@ -43,6 +44,11 @@ all_planes={}
 # planes with closest approach to home of less that TWEET_RADIUS miles will be tweeted
 TWEET_RADIUS=2.0
 
+osm_file = open("./osm_file.csv","a")
+#get the postcode string from open street map return
+pattern = re.compile(r"([A-Z][A-HJ-Y][0-9]* [0-9][A-Z][A-Z])")
+
+
 osm = requests.Session()
 dump_planes = False
 dump_icao = None
@@ -53,7 +59,7 @@ def get_term_width()->int:
     return term.width
 
 
-def get_time(clock=time.time()):
+def get_time(clock):
     """ Return an ascii string of the current time """
     answer = time.asctime(time.localtime(clock))
     return answer
@@ -96,7 +102,7 @@ def get_place(clat, clon):
             place = pos['display_name']
          else:
             place = "somewhere"
-        except Exception as e1:
+        except :
             loggit(" json {} resp {}  ".format(pos,resp.text),BOTH,RED_TEXT)
     except Exception as e:
         loggit("could not access OSM API {} req: {} ".format(e,req),BOTH,RED_TEXT)
@@ -160,6 +166,8 @@ def nearest_point(the_plane):
 
     place = get_place(the_plane['closest_lat'],the_plane['closest_lon'])
 
+    global osm_file,pattern
+
     if place is None:
         place = " API failed "
 
@@ -171,6 +179,14 @@ def nearest_point(the_plane):
             pd = pd + " " + json.dumps(the_plane)
             loggit(pd,BOTH,CYAN_TEXT)
             return
+
+        if the_plane['miles'] < 40.00:
+            postcode = pattern.findall(place)
+            if len(postcode) == 0:
+               postcode[0]="unknown"
+            osm_file.write(f'{the_plane["closest_lon"]},{the_plane["closest_lat"]},{the_plane["tail"]},{the_plane["miles"]},"{postcode[0]}"\n')
+            osm_file.flush()
+
 
         if the_plane['miles'] < TWEET_RADIUS:
             # Twitter suspended the account tweet(pd)
@@ -331,7 +347,7 @@ def dump_the_planes(icao_hex):
                     txt = txt + ",{}:'{}'".format(item, this_plane[item])
             txt = txt + ",version:'1'"
             txt = txt + ",tdiff:'{:.2f}', tn:'{}' ".format(
-                (target_time - this_plane['touched']), get_time()) + "},"
+                (target_time - this_plane['touched']), get_time(time.time())) + "},"
             loggit(txt)
 
 

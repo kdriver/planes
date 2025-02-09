@@ -1,6 +1,6 @@
 import sqlite3
 from loggit import loggit
-from loggit import TO_SCREEN,VRS,ALL,TO_DEBUG
+from loggit import ALL,TO_DEBUG
 import time
 
 create_text = """ CREATE TABLE IF NOT EXISTS vrs ( 
@@ -22,7 +22,7 @@ class Vrs():
         self.the_time = 0
         answer = self.db.execute("SELECT bearing FROM vrs WHERE bearing = 0;")
         txt = answer.fetchone()
-        if txt == None:
+        if txt is None:
             # create the template
             for deg in range(0,360,1):
                 self.db.execute("INSERT into vrs({}) VALUES ( ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )".format(cols),(deg,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
@@ -53,7 +53,7 @@ class Vrs():
     def update_entry_10k(self,bearing,lat,lon,alt,miles,icao,alarm):
         answer = self.db.execute("SELECT miles_10k FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
-        if txt != None:
+        if txt is not None:
             # print("retrieved {}".format(txt[0]))
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_10k = ?, lon_10k = ?, alt_10k = ? , miles_10k = ?, the_plane_10k = ?, the_time_10k = ?  WHERE bearing = {}".format(bearing),(lat,lon,alt,miles,icao,self.the_time))
@@ -65,7 +65,7 @@ class Vrs():
     def update_entry_20k(self,bearing,lat,lon,alt,miles,icao,alarm):
         answer = self.db.execute("SELECT miles_20k FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
-        if txt != None:
+        if txt is not None:
             # print("retrieved {}".format(txt[0]))
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_20k = ?, lon_20k = ?, alt_20k = ? , miles_20k = ? , the_plane_20k = ? , the_time_20k = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles,icao,self.the_time))
@@ -77,7 +77,7 @@ class Vrs():
     def update_entry_max(self,bearing,lat,lon,alt,miles,icao,alarm):
         answer = self.db.execute("SELECT miles_max FROM vrs WHERE bearing ={}".format(bearing))
         txt = answer.fetchone()
-        if txt != None:
+        if txt is not  None:
             # print("retrieved {}".format(txt[0]))
             if miles > float(txt[0]):
                 self.db.execute("UPDATE vrs SET lat_max = ?, lon_max = ?, alt_max = ? , miles_max = ? , the_plane_max = ? , the_time_max = ? WHERE bearing = {}".format(bearing),(lat,lon,alt,miles,icao,self.the_time))

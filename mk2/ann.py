@@ -15,8 +15,8 @@ from gtts import gTTS
 import time
 import hashlib
 
-ip=sys.argv[1];
-say=sys.argv[2];
+ip=sys.argv[1]
+say=sys.argv[2]
 
 #********* retrieve local ip of my rpi3
 
@@ -26,7 +26,7 @@ local_ip=s.getsockname()[0]
 s.close()
 #**********************
 
-fname=hashlib.md5(say.encode()).hexdigest()+".mp3"; #create md5 filename for caching
+fname=hashlib.md5(say.encode()).hexdigest()+".mp3" #create md5 filename for caching
 
 castdevice = pychromecast.Chromecast(ip)
 castdevice.wait()
