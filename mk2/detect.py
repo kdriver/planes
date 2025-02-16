@@ -183,8 +183,8 @@ def nearest_point(the_plane):
         if the_plane['miles'] < 40.00:
             postcode = pattern.findall(place)
             if len(postcode) == 0:
-               postcode[0]="unknown"
-            osm_file.write(f'{the_plane["closest_lon"]},{the_plane["closest_lat"]},{the_plane["tail"]},{the_plane["miles"]},"{postcode[0]}"\n')
+               postcode.append("unknown")
+            osm_file.write(f'{the_plane["closest_lon"]},{the_plane["closest_lat"]},{the_plane["tail"]},{the_plane["miles"]},"{postcode[0]}","{get_time(time.time())}"\n')
             osm_file.flush()
 
 
