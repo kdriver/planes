@@ -36,7 +36,7 @@ class Vrs():
         alarm=""
         if miles > 400.0:
             alarm = " alarm {} ".format(self.the_time)
-            loggit(f'bad position found {icao} {self} {bearing} {lat} {lon} {alt} {miles} {alarm}')
+            loggit(f'bad position found {icao} {vars(self)} {bearing} {lat} {lon} {alt} {miles} {alarm}')
             return
 
         if alt <= 10000:

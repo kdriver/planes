@@ -15,7 +15,7 @@ import re
 from vrs import Vrs
 from loggit import loggit,init_loggit
 from loggit import BOTH
-from loggit import TO_SCREEN
+from loggit import TO_SCREEN,TO_DEBUG
 # from loggit import TO_FILE
 from loggit import GREEN_TEXT
 from loggit import YELLOW_TEXT
@@ -360,7 +360,13 @@ last_log = last_tick
 sqldb.attach_sqldb()
 vrs = Vrs("vrs_data.sqb")
 
+min_time=100.0
+max_time = 0.0
+ave_time = 0.0
+readings = 0
+
 while 1:
+    loop_timer_now = time.time()
     read_planes()
     delete_list = []
     now = time.time()
@@ -403,6 +409,12 @@ while 1:
          #   write out a kml file with all the t planes we can see
         three_d_vrs(all_planes)
         last_tick = now
+    elapsed = time.time() - loop_timer_now
+    min_time = min(min_time, elapsed)
+    max_time = max(max_time, elapsed)
+    readings += 1
+    ave_time = ave_time + (elapsed - ave_time) / readings
+    loggit(f"{elapsed: .2f} secs , min {min_time: .2f} , max {max_time: .2f} , ave {ave_time: .2f}",TO_DEBUG)
 
 
     time.sleep(5)
