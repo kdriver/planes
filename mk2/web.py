@@ -189,6 +189,7 @@ class MyHandler(BaseHTTPRequestHandler):
             the_lock.release()
             self.wfile.write(b'</body>')
         except Exception as e:
+            the_lock.release()
             loggit("Error serving web page {}".format(e))
         return
 
