@@ -11,6 +11,7 @@ import time
 
 from icao_countries import ICAOCountries
 import adsbex_query
+from opensky_query import opensky_lookup
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -141,6 +142,16 @@ class DataService:
             return True
         return False
     
+    def insert_row(self,the_hex,the_tail,the_type):
+        data = {
+                        'tail' : the_tail,
+                        'model' : the_type,
+                        'icao_hex' : the_hex,
+                        'man' : None
+                        }
+        self.insert(data,True)
+
+    
     def lookup(self, icao, remote_lookup=True):
         # loggit(" {}".format(icao),BOTH)
         """
@@ -166,40 +177,41 @@ class DataService:
             if remote_lookup is False:
                 return None
 
-            loggit(f"remote lookup {the_hex}",BOTH)
+            loggit(f"remote lookup {the_hex} in ADSB Exchange",BOTH)
             try:
                 adsb = adsbex_query.adsb_lookup(the_hex)
             except Exception as my_exception:
-                loggit(f"adsb lookup exception {my_exception}", BOTH)
+                loggit(f"   adsb lookup exception {my_exception}", BOTH)
                 adsb = None
 
             if adsb is not None and adsb['tail'] !='CONTACTADSBX':
-                loggit(f"{adsb}",BOTH)
+                loggit(f"   {adsb}",BOTH)
                 row = (adsb['tail'], adsb['type'])
-                loggit(f"{the_hex} found {row} in from ADSB API",BOTH)
-                data = {
-                        'tail' : adsb['tail'],
-                        'model' : adsb['type'],
-                        'icao_hex' : the_hex,
-                        'man' : None
-                        }
-                loggit(f"adsb exchange lookup {data}", BOTH)
-                self.insert(data,True)
+                loggit(f"   {the_hex} found {row} in from ADSB API",BOTH)
+                self.insert_row(the_hex,adsb['tail'],adsb['type'])
+                loggit(f"   adsb exchange lookup {row}", BOTH)
                 return row
             loggit(f"    {icao} Not found in ADSB exchange API",BOTH)
+            try:
+                loggit(f"remote lookup {the_hex} in OpenSky",BOTH)
+                opensky = opensky_lookup(the_hex)
+                if opensky is not None:
+                    row = ( opensky['tail'],opensky['type'])
+                    loggit(f"   {the_hex} found {row} in from OpenSky API",BOTH)
+                    self.insert_row(the_hex,opensky['tail'],opensky['type'])
+                    return row
+            except:
+                    loggit(f"   Problem looking up {the_hex} in Opensky API")
+
+            loggit(f"    {icao} Not found in Opensky API",BOTH)
             try:
                 blackswan = self.blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
                     row = (blackswan[0], blackswan[1])
-                    data = {
-                                'tail' : blackswan[0],
-                                'model': blackswan[1],
-                                'icao_hex' : the_hex,
-                                'man' : None
-                            }
-                    loggit(f"{the_hex} found {row} from blackswan API",BOTH)
+                    loggit(f"   {the_hex} found {row} from blackswan API",BOTH)
+                    self.insert_row(the_hex,blackswan[0],blackswan[1])
                     if blackswan[0] != '':
-                        self.insert(data,True)
+                        self.insert_row(the_hex,blackswan[0],blackswan[1])
                         return row
                 loggit(f"    {icao} Not found in blackswan API, suppress lookup for 24 hours",BOTH)
                 self.suppress_dict[icao] = time.time()
