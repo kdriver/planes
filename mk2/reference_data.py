@@ -18,7 +18,6 @@ conn_base=None
 
 consolidated_data = None
 
-modes_map={}
 aircraft_data_map={}
 
 #last_updated = time.time() - (60*60*25)
@@ -36,29 +35,6 @@ def ascii_time():
     """ Return an ascii time string """
     return time.asctime( time.localtime(time.time()))
 
-# def attach_adsbex_cache():
-#     global adsbex_cache
-#     try:
-#         adsbex_cache = sqlite3.connect("adsbex_cache.sqb")
-#         cur = adsbex_cache.cursor()
-#         cur.execute(create_text)
-#         adsbex_cache.commit()
-#         loggit("adsbex cache attached")
-#     except Exception as e_name:
-#         print("adsbex cache exception {}".format(e_name))
-
-# attach_adsbex_cache()
-
-
-# def insert_adsbex_cache(data_tuple):
-#     global adsbex_cache
-#     try:
-#         cur = adsbex_cache.cursor()
-#         cur.execute("INSERT INTO cache(%s) VALUES (?,?,?,?)" % cols,data_tuple)
-#         adsbex_cache.commit()
-#         loggit("cached in adsb_cache")
-#     except Exception as e_name:
-#         print(f"insert into adsbex exception {e_name}")
 
 
 def call_command(command):
@@ -75,7 +51,6 @@ def call_command(command):
 def init_reference_data():
     global conn
     global conn_base
-    global modes_map
     global consolidated_data
     loggit("Connecting to databases")
     loggit("Consolidated data")
@@ -84,38 +59,6 @@ def init_reference_data():
     conn = sqlite3.connect('StandingData.sqb')
     loggit("Base station ")
     conn_base = sqlite3.connect('./BaseStation.sqb')
-    loggit("ModeS list ")
-    # modes_file = open("./modes.tsv")
-    # read_tsv = csv.reader(modes_file,delimiter='	')
-    modes_map={}
-    # counter=0
-    # for row in read_tsv:
-    #     try:
-    #         modes_map[row[2]] = row[4]
-    #         counter=counter+1
-    #     except:
-    #         pass
-    #     if not(counter % 1000):
-    #         print(".",end='',flush=True)
- 
-    # loggit("\nbasic AC database")
-    # counter = 0
-    # with open('basic-ac-db.json') as f:
-    #     while True:
-    #         global aircraft_data_map
-    #         try:
-    #             counter = counter + 1
-    #             line = f.readline()
-    #             if not line:
-    #                 break
-    #             ac = json.loads(line)
-    #             ac_data = [ ac["reg"],ac["icao"],ac["manufacturer"],ac["model"]]
-    #             aircraft_data_map[ac['icao']] = ac_data
-    #             if not(counter % 1000):
-    #                 print(".",end='',flush=True)
-    #         except Exception as e:
-    #             print("error parsing {} in basic-ac-db.json {}".format(line,e))
-  
     
     loggit("Connected to databases")
 
@@ -132,11 +75,6 @@ def update_reference_data():
             loggit("script returned")
             conn_base = sqlite3.connect('./BaseStation.sqb')
             conn = sqlite3.connect('./StandingData.sqb')
-            # modes_file = open("./modes.tsv")
-            # read_tsv = csv.reader(modes_file,delimiter='	')
-            # modes_map={}
-            # for row in read_tsv:
-            #     modes_map[row[2]] = row[4]
         except Exception as my_e:
             print(f"Complete disaster - cant update the databases {my_e} ")
             sys.exit()

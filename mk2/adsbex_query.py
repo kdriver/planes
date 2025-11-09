@@ -8,7 +8,7 @@ s.headers.update({'Api-Auth':ADSBExKey.ADSB_KEY})
 
 def adsb_lookup(plane):
     URL= "https://adsbexchange.com/api/aircraft/icao/{0}/".format(plane.strip().upper())
-    loggit("lookup {0} in adsbexchange".format(URL))
+    loggit(f"   lookup {URL} in adsbexchange")
     try:
         r = s.get(url=URL)
     except Exception as e:

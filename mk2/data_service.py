@@ -80,6 +80,37 @@ class DataService:
 
         return val
 
+    def hexdbio_lookup(self,icao):
+        if '~' in icao:
+            loggit("~ detected in icao - dont lookup in hexdb.io" )
+            return(None,None)
+
+        try:
+            the_url = f'https://hexdb.io/api/v1/aircraft/{icao}'
+            loggit(f' {icao} in hexdb.io {the_url}')
+
+            response = r.requests.get(the_url)
+            if response.status_code == 200:
+                # convert the json to a dictionary
+               data = response.json()
+               tail = data.get('Registration')
+               model = data.get('aircraft_type')
+               if tail is not None and model is not None:
+                   return (tail,model)
+
+            if response.status_code == 404 :
+                loggit(f"hexdb.io has no data for {icao}")
+
+        except Exception as my_e:
+            loggit(f"could not find plane in hexdb.io {icao}")
+
+        return (None,None)
+
+
+
+
+
+
     def blackswan_lookup(self,icao):
         if '~' in icao:
             loggit("~ detected in icao - dont lookup in blackswan" )
@@ -203,7 +234,16 @@ class DataService:
             except:
                     loggit(f"   Problem looking up {the_hex} in Opensky API")
 
-            loggit(f"    {icao} Not found in Opensky API",BOTH)
+            loggit(f"    {icao} Not found in Opensky API, try hexdb.io",BOTH)
+            try:
+                hexdb_io = self.hexdbio_lookup(the_hex)
+                if hexdb_io[0] is not None:
+                    loggit(f"{the_hex} found {hexdb_io} from hexdb.io")
+                    self.insert_row(the_hex,hexdb_io[0],hexdb_io[1])
+                    return hexdb_io
+            except Exception as e_name:
+                loggit(f"hexdbio exception {e_name}",BOTH)
+
             try:
                 blackswan = self.blackswan_lookup(the_hex)
                 if blackswan[0] is not None:
