@@ -88,14 +88,23 @@ def enrich(icao_hex, the_plane):
     the_plane['enriched'] = 1
 
 
+osm_time = 0
 def get_place(clat, clon):
     """ Use the Open Street Map API to look up the nearest place"""
     place = "unknown"
     pos=""
+    global osm_time
     try:
+        if time.time_ns()  - osm_time  < 1000000000:
+            loggit("sleeping for OSM\n")
+            time.sleep(1)
+        else:
+            loggit(f"delta since last OSM is {(time.time_ns() - osm_time)/1000000000}")
+
         req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format( clat, clon)
-        resp = osm.get(url=req,headers={'referer': "kddplanes"})
+        resp = osm.get(url=req,headers={'referer': "kddplanes","User-Agent" : "MyUKAddressApp/1.0 driver.keith@gmail.com"})
         #loggit("OSM API ok req: {} ".format(req))
+        osm_time = time.time_ns()
         try:
          pos = json.loads(resp.text)
          if 'display_name' in pos:

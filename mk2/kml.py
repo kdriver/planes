@@ -175,8 +175,11 @@ def write_kmz(h, p):
             tstamp = time.asctime().replace(' ','_').replace(':','_')
             daystr = "/mnt/usb_stick/kmls/" + time.strftime("%d-%b-%Y")
 
-            if os.path.exists(daystr) is False:
-              os.mkdir(daystr)
+            if not os.path.exists(daystr) :
+                try:
+                   os.mkdir(daystr)
+                except Exception as e:
+                   loggit(f"write_kml {e}  {daystr}")
               
             with zipfile.ZipFile(f"{daystr}/{name}--{tstamp}_f.kmz", "w") as zip_file:
               zip_file.writestr(f"{name}.kml", doc)
