@@ -10,7 +10,6 @@ import zipfile
 from home import home
 from kml import kml_doc
 from loggit import BOTH, CYAN_TEXT, GREEN_TEXT, RED_TEXT, YELLOW_TEXT, loggit
-import say
 import sqldb
 from runtime_config import ensure_runtime_dirs
 
@@ -166,7 +165,6 @@ class PlaneReporter:
                     txt = txt + ' on ground'
 
                 txt = txt + ' distance {:>1.1f} miles'.format(m)
-                say.speak(txt)
             else:
                 pd = pd + ' : ' + place
                 if 'plane' in the_plane:
