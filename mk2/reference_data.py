@@ -11,6 +11,7 @@ from loggit import loggit
 from loggit import BOTH
 from loggit import RED_TEXT 
 from data_service import DataService
+from runtime_config import database_path, ensure_runtime_dirs
 
 conn=None
 conn_base=None
@@ -28,39 +29,21 @@ else:
     last_updated = time.time() 
 
 
-create_text = """ CREATE TABLE IF NOT EXISTS cache ( id integer primary key autoincrement,  hex text, tail text,type text , seen integer); """ 
-cols = "  hex , tail , type , seen  " 
-
-def ascii_time():
-    """ Return an ascii time string """
-    return time.asctime( time.localtime(time.time()))
-
-
-
-def call_command(command):
-    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
-    if isinstance(txt,bytes):
-        val = txt.decode('utf-8')
-    else:
-        val = txt
-
-    loggit(val)
-
-    return val
-
 def init_reference_data():
     global conn
     global conn_base
     global consolidated_data
     loggit("Connecting to databases")
     loggit("Consolidated data")
-    consolidated_data = DataService("consolidated_data.sqb")
+    consolidated_data = DataService(database_path('consolidated_data.sqb'))
     loggit("Standing data")
-    conn = sqlite3.connect('StandingData.sqb')
+    conn = sqlite3.connect(database_path('StandingData.sqb'))
     loggit("Base station ")
-    conn_base = sqlite3.connect('./BaseStation.sqb')
+    conn_base = sqlite3.connect(database_path('BaseStation.sqb'))
+    ensure_runtime_dirs()
     
     loggit("Connected to databases")
+
 
 def update_reference_data():
     global last_updated,conn,conn_base
@@ -73,8 +56,8 @@ def update_reference_data():
             loggit("call script and try to refresh databasei {}".format(ascii_time()))
             call_command(["./update_BaseStation.sh"])
             loggit("script returned")
-            conn_base = sqlite3.connect('./BaseStation.sqb')
-            conn = sqlite3.connect('./StandingData.sqb')
+            conn_base = sqlite3.connect(database_path('BaseStation.sqb'))
+            conn = sqlite3.connect(database_path('StandingData.sqb'))
         except Exception as my_e:
             print(f"Complete disaster - cant update the databases {my_e} ")
             sys.exit()
@@ -128,6 +111,21 @@ def is_suppressed(icao):
 
 def plane_seen(icao):
     consolidated_data.plane_seen(icao)
+
+def ascii_time():
+    """ Return an ascii time string """
+    return time.asctime(time.localtime(time.time()))
+
+def call_command(command):
+    txt = subprocess.check_output(command,stderr=subprocess.STDOUT)
+    if isinstance(txt,bytes):
+        val = txt.decode('utf-8')
+    else:
+        val = txt
+
+    loggit(val)
+
+    return val
 
 if __name__ == "__main__":
     init_reference_data()

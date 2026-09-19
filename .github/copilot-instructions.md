@@ -1,0 +1,21 @@
+# Copilot instructions for this repo
+
+- This repo is a set of Python scripts in `mk2/`, not a packaged app. Most commands are run from that directory, and the root `README.md` describes the historical workflow (`python3 detect.py`, `python3 splat.py`).
+- `detect.py` is the main runtime loop. It reads `/var/run/dump1090-fa/aircraft.json`, keeps per-aircraft state in the in-memory `all_planes` dict, and calls `nearest_point()` when a plane passes closest to home. That function writes to SQLite and emits a `.kmz` for the track.
+- Enrichment is split across `reference_data.py` and `data_service.py`. `reference_data.py` owns SQLite connections to `StandingData.sqb`, `BaseStation.sqb`, and `consolidated_data.sqb`; `DataService.lookup()` tries ADSB Exchange, OpenSky, hexdb.io, then Blackswan, and suppresses repeated misses for 24 hours.
+- The data flow is intentionally simple and script-driven: dump1090 JSON -> `read_planes()` -> `enrich()` -> `nearest_point()` -> SQLite/KML output. Do not reorganize this into a framework or service container unless the change truly requires it.
+- `sqldb.py` is a tiny helper that does one thing: insert rows into `planes.sqb`. Most real logic remains in top-level script functions and globals, not in a richer model layer.
+- `web.py` exposes a small live dashboard on port 4443 (`/numplanes` and the default page) using an HTTP server thread and a shared `planes` dict. If you change live tracking data, preserve thread-safety and the existing JSON/HTML shape.
+- Output files are runtime artifacts, not source-controlled application state: `planes.sqb`, `consolidated_data.sqb`, `StandingData.sqb`, `BaseStation.sqb`, `adsb_cache.sqb`, `unknown_planes.sqb`, `vrs_data.sqb`, and per-plane `kmls/*.kmz`.
+- The repo expects local private config files outside Git, such as `home.py` (home coordinates), `twittertokens.py`, and possibly `ADSBExKey.py`. Keep those secrets out of commits and follow the pattern of runtime-generated data files.
+- `README.md` and the scripts assume this runs on a machine with dump1090-fa providing aircraft JSON; many components are built around local SQLite + external enrichment APIs rather than an abstract data layer.
+- Linting/formatting uses `ruff` via `mk2/ruff.toml`: single quotes, no enforced line length, and `E722`/`E501` are ignored. Use that style when editing Python files.
+- There are no obvious unit tests in this repo; validation is generally script-level execution and sanity checks against the SQLite/KML outputs. Prefer targeted verification over broad refactors.
+- Example commands:
+  - `cd mk2 && python3 detect.py`
+  - `cd mk2 && python3 splat.py`
+  - `cd mk2 && ruff check .`
+- The project uses direct `print()` and `loggit()` logging rather than structured logging or dependency injection. Keep that convention unless the exact feature needs a different pattern.
+- If you touch the lookup stack, preserve the current ordering: local cache/DB -> ADSB Exchange -> OpenSky -> hexdb.io -> Blackswan. That sequence is part of the project’s behavior and suppression strategy.
+- If you modify KML generation, inspect `kml.py` and the `nearest_point()` path together; this repo stores track history and nearest-point visuals as KMZ artifacts, not just summaries in the database.
+- Prefer small, surgical edits in the existing scripts over “cleanup” refactors. This codebase is operational and intentionally minimal, so broad architectural changes are high-risk.
