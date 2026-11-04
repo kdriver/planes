@@ -96,10 +96,8 @@ def get_place(clat, clon):
     global osm_time
     try:
         if time.time_ns()  - osm_time  < 1000000000:
-            loggit("sleeping for OSM\n")
-            time.sleep(1)
-        else:
             loggit(f"delta since last OSM is {(time.time_ns() - osm_time)/1000000000}")
+            time.sleep(1)
 
         req = "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}".format( clat, clon)
         resp = osm.get(url=req,headers={'referer': "kddplanes","User-Agent" : "MyUKAddressApp/1.0 driver.keith@gmail.com"})

@@ -31,11 +31,11 @@ update_aircraft_data () {
 
 update_aircraft_data basic-ac-db.json.gz  http://downloads.adsbexchange.com/downloads/basic-ac-db.json.gz
 
-update_aircraft_data routes.tsv.gz  http://data.flightairmap.com/data/routes.tsv.gz
+# update_aircraft_data routes.tsv.gz  http://data.flightairmap.com/data/routes.tsv.gz
 
-update_aircraft_data modes.tsv.gz   http://data.flightairmap.com/data/modes.tsv.gz 
+# update_aircraft_data modes.tsv.gz   http://data.flightairmap.com/data/modes.tsv.gz 
 
-update_aircraft_data  BaseStation.sqb.gz http://data.flightairmap.com/data/basestation/BaseStation.sqb.gz
+# update_aircraft_data  BaseStation.sqb.gz http://data.flightairmap.com/data/basestation/BaseStation.sqb.gz
 
 update_aircraft_data  StandingData.sqb.gz http://www.virtualradarserver.co.uk/Files/StandingData.sqb.gz
 
