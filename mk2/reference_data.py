@@ -8,7 +8,7 @@ import sys
 import time
 from loggit import loggit
 # from loggit import TO_FILE,TO_SCREEN
-from loggit import BOTH
+from loggit import BOTH, TO_DEBUG
 from loggit import RED_TEXT 
 from data_service import DataService
 from runtime_config import database_path, ensure_runtime_dirs
@@ -95,7 +95,7 @@ def add_reference_data(icao,plane):
     """ look up the tail from icao hex , and route data if known"""
     result = add_tail_and_type(icao,plane)
     if result is None and '~' not in icao:
-        loggit("add_reference_data no tail found {}".format(icao),BOTH,RED_TEXT )
+        loggit("add_reference_data no tail found {}".format(icao), TO_DEBUG)
 
     if 'route' not in plane:
         add_route(plane)

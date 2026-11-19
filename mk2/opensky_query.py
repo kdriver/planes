@@ -1,6 +1,6 @@
 
 import requests
-from loggit import loggit,init_loggit
+from loggit import loggit, init_loggit, TO_DEBUG
 import time
 
 s = requests.Session()
@@ -8,15 +8,15 @@ s = requests.Session()
 
 def opensky_lookup(plane):
     URL= "https://opensky-network.org/api/metadata/aircraft/icao/{0}/".format(plane.strip().upper())
-    loggit(f"   lookup {URL} in opensky network")
+    loggit(f"   lookup {URL} in opensky network", TO_DEBUG)
     try:
-        r = s.get(url=URL)
+        r = s.get(url=URL, timeout=10)
     except Exception as e:
-        loggit("    Error looking up in opensky  {}".format(e))
+        loggit("    Error looking up in opensky  {}".format(e), TO_DEBUG)
         return None
 
     if r.status_code != 200:
-        loggit(f"   Opensky lookup {plane} HTTP error {r.status_code}")
+        loggit(f"   Opensky lookup {plane} HTTP error {r.status_code}", TO_DEBUG)
         return None
   
     answer = r.json()
@@ -27,10 +27,10 @@ def opensky_lookup(plane):
         else:
             #loggit(json.dumps(answer,indent=4))
             data = { 'icao' : plane, 'tail' : answer['registration'] , 'type' : answer['typecode']}
-            loggit(f"   Data Returned {data}")
+            loggit(f"   Data Returned {data}", TO_DEBUG)
             return data
     else:
-        loggit(f'No JSON in OpenSky response for plane {plane}')
+        loggit(f'No JSON in OpenSky response for plane {plane}', TO_DEBUG)
         return None
 
 if __name__ == "__main__":

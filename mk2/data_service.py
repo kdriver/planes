@@ -41,11 +41,13 @@ class DataService:
             self.handle = sqlite3.connect(data_file)
             cursor = self.handle.cursor()
             cursor.execute(self.create_text)
+            cursor.execute(self.create_unknown_text)
             self.handle.commit()
             self.black_counter = 0
             self.counter= 0
             self.icao_map = ICAOCountries()
             self.suppress_dict = {}
+            self.load_recent_unknowns()
             self.start_time=datetime.now()
             # self.refresh_external_data()
             # self.update_local_cache()
@@ -53,6 +55,49 @@ class DataService:
             print(my_e)
             print(f"Could not open database {data_file}")
             sys.exit(1)
+
+    # ICAO hex codes that no lookup source could resolve to a tail number.
+    # Timestamps are local time, 'YYYY-MM-DD HH:MM:SS'.
+    create_unknown_text = """ CREATE TABLE IF NOT EXISTS unknown ( hex text primary key,
+                              first_seen text, last_seen text, attempts integer); """
+
+    def load_recent_unknowns(self):
+        """ Re-suppress planes that failed lookup in the last 24 hours, so a restart doesn't re-query them """
+        rows = self.handle.execute(
+            "SELECT hex, strftime('%s', last_seen, 'utc') FROM unknown "
+            "WHERE last_seen > datetime('now', 'localtime', '-1 day')").fetchall()
+        for the_hex, epoch in rows:
+            self.suppress_dict[the_hex] = float(epoch)
+        loggit(f"{len(rows)} unknown planes suppressed from the last 24 hours")
+
+    def record_unknown(self, icao):
+        """ Record that no source could find a tail for this icao hex """
+        try:
+            self.handle.execute(
+                """INSERT INTO unknown (hex, first_seen, last_seen, attempts)
+                   VALUES (?, datetime('now','localtime'), datetime('now','localtime'), 1)
+                   ON CONFLICT(hex) DO UPDATE SET last_seen = excluded.last_seen,
+                                                  attempts = attempts + 1""",
+                (icao.lower(),))
+            self.handle.commit()
+        except Exception as e:
+            loggit(f"record_unknown: error {e} {icao}")
+
+    def reference_index_lookup(self, the_hex):
+        """ Look up a hex in reference_index.sqb (built from the downloaded bulk databases
+            by build_reference_index.py). Opened per call so a rebuilt index is picked up. """
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reference_index.sqb')
+        if not os.path.exists(path):
+            return None
+        try:
+            con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            try:
+                return con.execute("SELECT tail, type FROM ref WHERE hex = ?", (the_hex,)).fetchone()
+            finally:
+                con.close()
+        except Exception as e:
+            loggit(f"reference index lookup error {e} {the_hex}")
+            return None
 
     def update_the_cache(self):
         self.update_local_cache()
@@ -62,9 +107,9 @@ class DataService:
             return
         try:
             the_hex = icao.lower()
-            sql_cmd = f" UPDATE aircraft SET seen = seen + 1 WHERE hex = '{the_hex}' ; "
+            sql_cmd = "UPDATE aircraft SET seen = seen + 1 WHERE hex = ?"
             cursor = self.handle.cursor()
-            cursor.execute(sql_cmd)
+            cursor.execute(sql_cmd, (the_hex,))
             self.handle.commit()
         except Exception as e:
             loggit(f"plane_seen: error {e} {sql_cmd}")
@@ -87,22 +132,21 @@ class DataService:
 
         try:
             the_url = f'https://hexdb.io/api/v1/aircraft/{icao}'
-            loggit(f' {icao} in hexdb.io {the_url}')
+            loggit(f' {icao} in hexdb.io {the_url}', TO_DEBUG)
 
-            response = r.requests.get(the_url)
+            response = requests.get(the_url, timeout=10)
             if response.status_code == 200:
-                # convert the json to a dictionary
-               data = response.json()
-               tail = data.get('Registration')
-               model = data.get('aircraft_type')
-               if tail is not None and model is not None:
-                   return (tail,model)
+                data = response.json()
+                tail = data.get('Registration')
+                model = data.get('ICAOTypeCode') or data.get('Type')
+                if tail and model:
+                    return (tail, model)
 
-            if response.status_code == 404 :
-                loggit(f"hexdb.io has no data for {icao}")
+            if response.status_code == 404:
+                loggit(f"hexdb.io has no data for {icao}", TO_DEBUG)
 
         except Exception as my_e:
-            loggit(f"could not find plane in hexdb.io {icao}")
+            loggit(f"could not find plane in hexdb.io {icao}: {my_e}", TO_DEBUG)
 
         return (None,None)
 
@@ -121,9 +165,9 @@ class DataService:
             self.black_counter = self.black_counter + 1
             time_b = time.time()
             the_url = f'https://blackswan.ch/aircraft/{icao}'
-            loggit(f' {icao} in blackswan {the_url}')
+            loggit(f' {icao} in blackswan {the_url}', TO_DEBUG)
 
-            r = requests.get(the_url)
+            r = requests.get(the_url, timeout=10)
             time_diff = time.time() - time_b
             page= r.text
             soup = BeautifulSoup(page,"html.parser")
@@ -134,17 +178,17 @@ class DataService:
             in_seconds = the_diff.total_seconds()
             in_days = in_seconds/(60*60*24)
             requests_per_day = self.black_counter/in_days
-            loggit(f"bs lookup took {time_diff} secs. {self.black_counter} requests total, which is {requests_per_day} per day after {in_days} days") 
+            loggit(f"bs lookup took {time_diff} secs. {self.black_counter} requests total, which is {requests_per_day} per day after {in_days} days", TO_DEBUG) 
 
             if reg is None or model is None:
-                loggit(f"blackswan has no data for {icao}")
+                loggit(f"blackswan has no data for {icao}", TO_DEBUG)
                 return(None,None)
             
             regt = reg.text
             modelt = model.text
             return (regt,modelt)
         except Exception as my_e:
-            loggit(f'could not find plane  {icao} in blackswan , exception : {my_e}')
+            loggit(f'could not find plane  {icao} in blackswan , exception : {my_e}', TO_DEBUG)
             return (None,None)
 
     def get_country(self, icao):
@@ -169,10 +213,8 @@ class DataService:
             
     
     def is_suppressed(self,icao):
-        if icao in self.suppress_dict:
-            return True
-        return False
-    
+        return icao.lower() in self.suppress_dict
+
     def insert_row(self,the_hex,the_tail,the_type):
         data = {
                         'tail' : the_tail,
@@ -181,6 +223,9 @@ class DataService:
                         'man' : None
                         }
         self.insert(data,True)
+        # it has a tail now, so it is no longer unknown
+        self.handle.execute("DELETE FROM unknown WHERE hex = ?", (the_hex.lower(),))
+        self.handle.commit()
 
     
     def lookup(self, icao, remote_lookup=True):
@@ -208,60 +253,44 @@ class DataService:
             if remote_lookup is False:
                 return None
 
-            loggit(f"remote lookup {the_hex} in ADSB Exchange",BOTH)
-            try:
-                adsb = adsbex_query.adsb_lookup(the_hex)
-            except Exception as my_exception:
-                loggit(f"   adsb lookup exception {my_exception}", BOTH)
-                adsb = None
-
-            if adsb is not None and adsb['tail'] !='CONTACTADSBX':
-                loggit(f"   {adsb}",BOTH)
-                row = (adsb['tail'], adsb['type'])
-                loggit(f"   {the_hex} found {row} in from ADSB API",BOTH)
-                self.insert_row(the_hex,adsb['tail'],adsb['type'])
-                loggit(f"   adsb exchange lookup {row}", BOTH)
-                return row
-            loggit(f"    {icao} Not found in ADSB exchange API",BOTH)
-            try:
-                loggit(f"remote lookup {the_hex} in OpenSky",BOTH)
-                opensky = opensky_lookup(the_hex)
-                if opensky is not None:
-                    row = ( opensky['tail'],opensky['type'])
-                    loggit(f"   {the_hex} found {row} in from OpenSky API",BOTH)
-                    self.insert_row(the_hex,opensky['tail'],opensky['type'])
+            # Try each source in turn. Per-source detail goes to the debug log;
+            # the main log gets one summary line per lookup.
+            tried = []
+            for name, source in self.lookup_sources():
+                try:
+                    row = source(the_hex)
+                except Exception as e_name:
+                    loggit(f"{the_hex} {name} lookup exception {e_name}", TO_DEBUG)
+                    row = None
+                if row and row[0]:
+                    row = (row[0], row[1] or '')
+                    loggit(f"{the_hex}  {row[0]:<8} {row[1]:<5} from {name}", BOTH)
+                    self.insert_row(the_hex, row[0], row[1])
                     return row
-            except:
-                    loggit(f"   Problem looking up {the_hex} in Opensky API")
+                tried.append(name)
 
-            loggit(f"    {icao} Not found in Opensky API, try hexdb.io",BOTH)
-            try:
-                hexdb_io = self.hexdbio_lookup(the_hex)
-                if hexdb_io[0] is not None:
-                    loggit(f"{the_hex} found {hexdb_io} from hexdb.io")
-                    self.insert_row(the_hex,hexdb_io[0],hexdb_io[1])
-                    return hexdb_io
-            except Exception as e_name:
-                loggit(f"hexdbio exception {e_name}",BOTH)
+            loggit(f"{the_hex}  not found in {', '.join(tried)} - suppressed for 24h", BOTH)
+            self.suppress_dict[the_hex] = time.time()
+            self.record_unknown(the_hex)
 
-            try:
-                blackswan = self.blackswan_lookup(the_hex)
-                if blackswan[0] is not None:
-                    row = (blackswan[0], blackswan[1])
-                    loggit(f"   {the_hex} found {row} from blackswan API",BOTH)
-                    self.insert_row(the_hex,blackswan[0],blackswan[1])
-                    if blackswan[0] != '':
-                        self.insert_row(the_hex,blackswan[0],blackswan[1])
-                        return row
-                loggit(f"    {icao} Not found in blackswan API, suppress lookup for 24 hours",BOTH)
-                self.suppress_dict[icao] = time.time()
-
-            except Exception as e_name:
-                loggit(f"blackswan lookup exception {e_name}", BOTH)
-           
         except Exception as e_name:
             loggit(f"error looking up {icao} {e_name}", TO_FILE)
         return None
+
+    def lookup_sources(self):
+        """ (name, fn) pairs tried in order; each fn takes a lowercase hex and returns (tail, type) or None """
+        def adsbx(the_hex):
+            adsb = adsbex_query.adsb_lookup(the_hex)
+            if adsb is not None and adsb['tail'] != 'CONTACTADSBX':
+                return (adsb['tail'], adsb['type'])
+            return None
+
+        # OpenSky is not here: its metadata API returns 410 Gone, even with
+        # credentials. Its data reaches us via the downloaded snapshot in the local index.
+        return [('local index', self.reference_index_lookup),
+                ('adsbx', adsbx),
+                ('hexdb', self.hexdbio_lookup),
+                ('blackswan', self.blackswan_lookup)]
 
     def insert(self, plane_dict, commit_it=False):
         """ Insert a new entry into the database = optional commit for performance"""
@@ -488,7 +517,7 @@ class DataService:
             'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" }
         url = "https://www.planespotters.net/hex/" + hex
         print(f"URL {url}")
-        resp = requests.get(url,headers=headers)
+        resp = requests.get(url, headers=headers, timeout=30)
         page= resp.text
         print(f"{page}")
         print(f"response code {resp.status_code}")

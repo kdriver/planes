@@ -1,5 +1,6 @@
 """A program to detect planes and tweet."""
 
+import functools
 import json
 import math
 import os
@@ -34,6 +35,9 @@ osm_file = open('./osm_file.csv', 'a')
 pattern = re.compile(r'([A-Z][A-HJ-Y][0-9]* [0-9][A-Z][A-Z])')
 
 osm = requests.Session()
+# requests has no default timeout: a request in flight when the network drops
+# would block the main loop forever. Give every call on this session one.
+osm.request = functools.partial(osm.request, timeout=15)
 dump_planes = False
 dump_icao = None
 dump_time = 0
@@ -61,7 +65,7 @@ def enrich(icao_hex, the_plane):
         return
 
     if result is None and '~' not in icao_hex:
-        loggit('could not enrich plane {}'.format(icao_hex))
+        loggit('could not enrich plane {}'.format(icao_hex), TO_DEBUG)
         return
     if result is None and '~' in icao_hex:
         global dump_time, dump_icao, dump_planes

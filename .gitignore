@@ -148,3 +148,7 @@ mk2/dec-13-basic-ac-db.json
 mk2/test_list.py
 mk2/aircraftDatabase.csv
 mk2/aircraftDatabase.zip
+
+# API credentials
+credentials.json
+mk2/credentials.json
