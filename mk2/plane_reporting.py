@@ -39,10 +39,10 @@ class PlaneReporter:
         pos = ''
         try:
             if time.time_ns() - self.osm_time < 1_000_000_000:
-                loggit('sleeping for OSM\n')
+#                loggit('sleeping for OSM\n')
                 time.sleep(1)
-            else:
-                loggit(f'delta since last OSM is {(time.time_ns() - self.osm_time)/1000000000}')
+#            else:
+#                loggit(f'delta since last OSM is {(time.time_ns() - self.osm_time)/1000000000}')
 
             req = 'https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}'.format(lat, lon)
             resp = self.osm.get(
